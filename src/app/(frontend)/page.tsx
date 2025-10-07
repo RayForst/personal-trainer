@@ -1,10 +1,10 @@
 import { headers as getHeaders } from 'next/headers.js'
-import Image from 'next/image'
 import { getPayload } from 'payload'
 import React from 'react'
-import { fileURLToPath } from 'url'
 
 import config from '@/payload.config'
+import WorkoutGrid from './components/WorkoutGrid'
+import AddWorkoutForm from './components/AddWorkoutForm'
 import './styles.css'
 
 export default async function HomePage() {
@@ -13,46 +13,39 @@ export default async function HomePage() {
   const payload = await getPayload({ config: payloadConfig })
   const { user } = await payload.auth({ headers })
 
-  const fileURL = `vscode://file/${fileURLToPath(import.meta.url)}`
+  // Получаем все тренировки для построения сетки активности
+  const workouts = await payload.find({
+    collection: 'workouts',
+    limit: 1000,
+    sort: '-date',
+  })
+
+  // Получаем последние тренировки для использования в качестве шаблонов
+  const recentWorkouts = await payload.find({
+    collection: 'workouts',
+    limit: 10,
+    sort: '-createdAt',
+  })
 
   return (
     <div className="home">
-      <div className="content">
-        <picture>
-          <source srcSet="https://raw.githubusercontent.com/payloadcms/payload/main/packages/ui/src/assets/payload-favicon.svg" />
-          <Image
-            alt="Payload Logo"
-            height={65}
-            src="https://raw.githubusercontent.com/payloadcms/payload/main/packages/ui/src/assets/payload-favicon.svg"
-            width={65}
-          />
-        </picture>
-        {!user && <h1>Welcome to your new project.</h1>}
-        {user && <h1>Welcome back, {user.email}</h1>}
-        <div className="links">
-          <a
-            className="admin"
-            href={payloadConfig.routes.admin}
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Go to admin panel
-          </a>
-          <a
-            className="docs"
-            href="https://payloadcms.com/docs"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Documentation
-          </a>
-        </div>
+      <div className="header">
+        <h1>Дневник тренировок</h1>
+        {user && <p>Добро пожаловать, {user.email}</p>}
       </div>
-      <div className="footer">
-        <p>Update this page by editing</p>
-        <a className="codeLink" href={fileURL}>
-          <code>app/(frontend)/page.tsx</code>
-        </a>
+
+      <div className="main-content">
+        {/* Сетка активности */}
+        <section className="activity-section">
+          <h2>История тренировок</h2>
+          <WorkoutGrid workouts={workouts.docs} />
+        </section>
+
+        {/* Форма добавления тренировки */}
+        <section className="add-workout-section">
+          <h2>Добавить тренировку</h2>
+          <AddWorkoutForm templates={recentWorkouts.docs} />
+        </section>
       </div>
     </div>
   )

@@ -69,6 +69,8 @@ export interface Config {
   collections: {
     users: User;
     media: Media;
+    workouts: Workout;
+    'workout-templates': WorkoutTemplate;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -77,6 +79,8 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    workouts: WorkoutsSelect<false> | WorkoutsSelect<true>;
+    'workout-templates': WorkoutTemplatesSelect<false> | WorkoutTemplatesSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -158,6 +162,61 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "workouts".
+ */
+export interface Workout {
+  id: string;
+  name: string;
+  date: string;
+  template?: (string | null) | WorkoutTemplate;
+  exercises?:
+    | {
+        name: string;
+        exerciseType: 'strength' | 'cardio';
+        sets?:
+          | {
+              reps?: string | null;
+              weight?: string | null;
+              duration?: string | null;
+              distance?: string | null;
+              notes?: string | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  notes?: string | null;
+  duration?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "workout-templates".
+ */
+export interface WorkoutTemplate {
+  id: string;
+  name: string;
+  description?: string | null;
+  exercises?:
+    | {
+        name: string;
+        exerciseType: 'strength' | 'cardio';
+        sets: number;
+        reps?: string | null;
+        weight?: string | null;
+        duration?: string | null;
+        distance?: string | null;
+        notes?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -170,6 +229,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: string | Media;
+      } | null)
+    | ({
+        relationTo: 'workouts';
+        value: string | Workout;
+      } | null)
+    | ({
+        relationTo: 'workout-templates';
+        value: string | WorkoutTemplate;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -252,6 +319,59 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "workouts_select".
+ */
+export interface WorkoutsSelect<T extends boolean = true> {
+  name?: T;
+  date?: T;
+  template?: T;
+  exercises?:
+    | T
+    | {
+        name?: T;
+        exerciseType?: T;
+        sets?:
+          | T
+          | {
+              reps?: T;
+              weight?: T;
+              duration?: T;
+              distance?: T;
+              notes?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  notes?: T;
+  duration?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "workout-templates_select".
+ */
+export interface WorkoutTemplatesSelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  exercises?:
+    | T
+    | {
+        name?: T;
+        exerciseType?: T;
+        sets?: T;
+        reps?: T;
+        weight?: T;
+        duration?: T;
+        distance?: T;
+        notes?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
