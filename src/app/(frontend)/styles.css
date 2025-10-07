@@ -104,23 +104,24 @@ body {
 
 .grid-container {
   display: flex;
+  flex-direction: column;
   gap: 0.5rem;
   overflow-x: auto;
   padding-bottom: 1rem;
 }
 
 .grid-months {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding-top: 1.5rem;
-  min-width: 30px;
+  display: grid;
+  grid-template-columns: repeat(53, 12px);
+  gap: 2px;
+  margin-left: 30px;
+  margin-bottom: 0.5rem;
 }
 
 .month-label {
   font-size: 0.75rem;
   color: #6c757d;
-  text-align: center;
+  text-align: left;
   height: 12px;
   line-height: 12px;
 }
@@ -128,6 +129,7 @@ body {
 .grid-weeks {
   display: flex;
   gap: 2px;
+  margin-left: 30px;
 }
 
 .week {

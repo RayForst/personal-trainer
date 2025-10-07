@@ -56,6 +56,24 @@ export default function WorkoutGrid({ workouts }: WorkoutGridProps) {
     weeks.push(days.slice(i, i + 7))
   }
 
+  // Создаем массив месяцев с правильными позициями для горизонтального отображения
+  const monthPositions = []
+  let currentMonth = ''
+
+  weeks.forEach((week, weekIndex) => {
+    const firstDay = week[0]
+    const dayDate = new Date(firstDay.date)
+    const monthName = dayDate.toLocaleDateString('ru-RU', { month: 'short' })
+
+    if (monthName !== currentMonth) {
+      currentMonth = monthName
+      monthPositions.push({
+        name: monthName,
+        weekIndex: weekIndex,
+      })
+    }
+  })
+
   const getIntensityColor = (workoutCount: number) => {
     if (workoutCount === 0) return '#ebedf0'
     if (workoutCount === 1) return '#c6e48b'
@@ -95,13 +113,17 @@ export default function WorkoutGrid({ workouts }: WorkoutGridProps) {
 
       <div className="grid-container">
         <div className="grid-months">
-          {['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'].map(
-            (month) => (
-              <div key={month} className="month-label">
-                {month}
-              </div>
-            ),
-          )}
+          {monthPositions.map((month, index) => (
+            <div
+              key={`${month.name}-${index}`}
+              className="month-label"
+              style={{
+                gridColumn: month.weekIndex + 1,
+              }}
+            >
+              {month.name}
+            </div>
+          ))}
         </div>
 
         <div className="grid-weeks">
