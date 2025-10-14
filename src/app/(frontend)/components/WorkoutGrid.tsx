@@ -1,27 +1,15 @@
 'use client'
 
 import React from 'react'
-import Link from 'next/link'
-
-interface Workout {
-  id: string
-  name: string
-  date: string
-  exercises?: Array<{
-    name: string
-    sets?: Array<{
-      reps?: string
-      weight?: string
-      duration?: string
-    }>
-  }>
-}
+import type { Workout } from '@/payload-types'
+// import Link from 'next/link' - убираем, так как делаем SPA
 
 interface WorkoutGridProps {
   workouts: Workout[]
+  onDaySelect: (date: string) => void
 }
 
-export default function WorkoutGrid({ workouts }: WorkoutGridProps) {
+export default function WorkoutGrid({ workouts, onDaySelect }: WorkoutGridProps) {
   // Создаем карту тренировок по датам
   const workoutsByDate = new Map<string, Workout[]>()
 
@@ -35,7 +23,7 @@ export default function WorkoutGrid({ workouts }: WorkoutGridProps) {
 
   // Генерируем последние 365 дней
   const today = new Date()
-  const days = []
+  const days: Array<{ date: string; workouts: Workout[]; hasWorkouts: boolean }> = []
 
   for (let i = 364; i >= 0; i--) {
     const date = new Date(today)
@@ -51,28 +39,33 @@ export default function WorkoutGrid({ workouts }: WorkoutGridProps) {
   }
 
   // Группируем дни по неделям
-  const weeks = []
+  const weeks: Array<Array<{ date: string; workouts: Workout[]; hasWorkouts: boolean }>> = []
   for (let i = 0; i < days.length; i += 7) {
     weeks.push(days.slice(i, i + 7))
   }
 
   // Создаем массив месяцев с правильными позициями для горизонтального отображения
-  const monthPositions = []
+  const monthPositions: Array<{ name: string; weekIndex: number }> = []
   let currentMonth = ''
 
-  weeks.forEach((week, weekIndex) => {
-    const firstDay = week[0]
-    const dayDate = new Date(firstDay.date)
-    const monthName = dayDate.toLocaleDateString('ru-RU', { month: 'short' })
+  weeks.forEach(
+    (
+      week: Array<{ date: string; workouts: Workout[]; hasWorkouts: boolean }>,
+      weekIndex: number,
+    ) => {
+      const firstDay = week[0]
+      const dayDate = new Date(firstDay.date)
+      const monthName = dayDate.toLocaleDateString('ru-RU', { month: 'short' })
 
-    if (monthName !== currentMonth) {
-      currentMonth = monthName
-      monthPositions.push({
-        name: monthName,
-        weekIndex: weekIndex,
-      })
-    }
-  })
+      if (monthName !== currentMonth) {
+        currentMonth = monthName
+        monthPositions.push({
+          name: monthName,
+          weekIndex: weekIndex,
+        })
+      }
+    },
+  )
 
   const getIntensityColor = (workoutCount: number) => {
     if (workoutCount === 0) return '#ebedf0'
@@ -130,15 +123,15 @@ export default function WorkoutGrid({ workouts }: WorkoutGridProps) {
           {weeks.map((week, weekIndex) => (
             <div key={weekIndex} className="week">
               {week.map((day, dayIndex) => (
-                <Link
+                <div
                   key={`${day.date}-${dayIndex}`}
-                  href={`/workout/${day.date}`}
                   className="day-square"
                   style={{
                     backgroundColor: getIntensityColor(day.workouts.length),
-                    cursor: day.hasWorkouts ? 'pointer' : 'default',
+                    cursor: 'pointer',
                   }}
                   title={getTooltipText(day)}
+                  onClick={() => onDaySelect(day.date)}
                 />
               ))}
             </div>

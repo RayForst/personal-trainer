@@ -3,8 +3,7 @@ import { getPayload } from 'payload'
 import React from 'react'
 
 import config from '@/payload.config'
-import WorkoutGrid from './components/WorkoutGrid'
-import AddWorkoutForm from './components/AddWorkoutForm'
+import HomePageComponent from './components/HomePage'
 import './styles.css'
 
 export default async function HomePage() {
@@ -29,24 +28,7 @@ export default async function HomePage() {
 
   return (
     <div className="home">
-      <div className="header">
-        <h1>Дневник тренировок</h1>
-        {user && <p>Добро пожаловать, {user.email}</p>}
-      </div>
-
-      <div className="main-content">
-        {/* Сетка активности */}
-        <section className="activity-section">
-          <h2>История тренировок</h2>
-          <WorkoutGrid workouts={workouts.docs} />
-        </section>
-
-        {/* Форма добавления тренировки */}
-        <section className="add-workout-section">
-          <h2>Добавить тренировку</h2>
-          <AddWorkoutForm templates={recentWorkouts.docs} />
-        </section>
-      </div>
+      <HomePageComponent initialWorkouts={workouts.docs} recentWorkouts={recentWorkouts.docs} />
     </div>
   )
 }

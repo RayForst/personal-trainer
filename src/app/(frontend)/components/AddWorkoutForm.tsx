@@ -1,37 +1,10 @@
 'use client'
 
 import React, { useState } from 'react'
-
-interface Exercise {
-  name: string
-  exerciseType: 'strength' | 'cardio'
-  sets: number
-  reps?: string
-  weight?: string
-  duration?: string
-  distance?: string
-  notes?: string
-}
-
-interface WorkoutTemplate {
-  id: string
-  name: string
-  date: string
-  exercises: Array<{
-    name: string
-    exerciseType: 'strength' | 'cardio'
-    sets: Array<{
-      reps?: string
-      weight?: string
-      duration?: string
-      distance?: string
-      notes?: string
-    }>
-  }>
-}
+import type { Workout } from '@/payload-types'
 
 interface AddWorkoutFormProps {
-  templates: WorkoutTemplate[]
+  templates: Workout[]
 }
 
 export default function AddWorkoutForm({ templates }: AddWorkoutFormProps) {
@@ -62,17 +35,19 @@ export default function AddWorkoutForm({ templates }: AddWorkoutFormProps) {
       setFormData((prev) => ({
         ...prev,
         template: templateId,
-        exercises: template.exercises.map((exercise) => ({
-          name: exercise.name,
-          exerciseType: exercise.exerciseType || 'strength',
-          sets: exercise.sets.map((set) => ({
-            reps: set.reps || '',
-            weight: set.weight || '',
-            duration: set.duration || '',
-            distance: set.distance || '',
-            notes: set.notes || '',
-          })),
-        })),
+        exercises:
+          template.exercises?.map((exercise) => ({
+            name: exercise.name,
+            exerciseType: exercise.exerciseType || 'strength',
+            sets:
+              exercise.sets?.map((set) => ({
+                reps: set.reps || '',
+                weight: set.weight || '',
+                duration: set.duration || '',
+                distance: set.distance || '',
+                notes: set.notes || '',
+              })) || [],
+          })) || [],
       }))
     } else {
       // Если шаблон не выбран, очищаем упражнения

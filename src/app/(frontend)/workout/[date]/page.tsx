@@ -4,25 +4,8 @@ import React from 'react'
 import Link from 'next/link'
 
 import config from '@/payload.config'
-
-interface Workout {
-  id: string
-  name: string
-  date: string
-  exercises: Array<{
-    name: string
-    exerciseType: 'strength' | 'cardio'
-    sets: Array<{
-      reps?: string
-      weight?: string
-      duration?: string
-      distance?: string
-      notes?: string
-    }>
-  }>
-  notes?: string
-  duration?: number
-}
+import type { Workout } from '@/payload-types'
+import WorkoutList from './components/WorkoutList'
 
 interface PageProps {
   params: {
@@ -66,59 +49,7 @@ export default async function WorkoutDayPage({ params }: PageProps) {
         <h1>Тренировки за {formatDate(params.date)}</h1>
       </div>
 
-      {workouts.docs.length === 0 ? (
-        <div className="no-workouts">
-          <p>В этот день тренировок не было</p>
-          <Link href="/" className="add-workout-link">
-            Добавить тренировку
-          </Link>
-        </div>
-      ) : (
-        <div className="workouts-list">
-          {workouts.docs.map((workout: Workout) => (
-            <div key={workout.id} className="workout-card">
-              <div className="workout-header">
-                <h2>{workout.name}</h2>
-                {workout.duration && <span className="duration">⏱️ {workout.duration} мин</span>}
-              </div>
-
-              <div className="exercises">
-                {workout.exercises.map((exercise, exerciseIndex) => (
-                  <div key={exerciseIndex} className="exercise">
-                    <h3>{exercise.name}</h3>
-                    <div className="sets">
-                      {exercise.sets.map((set, setIndex) => (
-                        <div key={setIndex} className="set">
-                          <span className="set-number">Подход {setIndex + 1}:</span>
-                          {exercise.exerciseType === 'strength' ? (
-                            <>
-                              {set.reps && <span>Повторения: {set.reps}</span>}
-                              {set.weight && <span>Вес: {set.weight} кг</span>}
-                            </>
-                          ) : (
-                            <>
-                              {set.duration && <span>Время: {set.duration}</span>}
-                              {set.distance && <span>Дистанция: {set.distance} км</span>}
-                            </>
-                          )}
-                          {set.notes && <span className="notes">Заметки: {set.notes}</span>}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {workout.notes && (
-                <div className="workout-notes">
-                  <h4>Заметки:</h4>
-                  <p>{workout.notes}</p>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+      <WorkoutList initialWorkouts={workouts.docs} />
     </div>
   )
 }
