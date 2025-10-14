@@ -3,8 +3,8 @@
 import React, { useState } from 'react'
 import WorkoutGrid from './WorkoutGrid'
 import AddWorkoutForm from './AddWorkoutForm'
+import WorkoutList from '../workout/[date]/components/WorkoutList'
 import type { Workout } from '@/payload-types'
-// import WorkoutList from '../workout/[date]/components/WorkoutList' // временно отключаем
 
 interface HomePageProps {
   initialWorkouts: Workout[]
@@ -14,17 +14,38 @@ interface HomePageProps {
 export default function HomePage({ initialWorkouts, recentWorkouts }: HomePageProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedDateWorkouts, setSelectedDateWorkouts] = useState<Workout[]>([])
+  const [allWorkouts, setAllWorkouts] = useState<Workout[]>(initialWorkouts)
 
   const handleDaySelect = async (date: string) => {
     setSelectedDate(date)
 
     // Фильтруем тренировки за выбранную дату
-    const workoutsForDate = initialWorkouts.filter((workout) => {
+    const workoutsForDate = allWorkouts.filter((workout) => {
       const workoutDate = new Date(workout.date).toISOString().split('T')[0]
       return workoutDate === date
     })
 
     setSelectedDateWorkouts(workoutsForDate)
+  }
+
+  const handleWorkoutUpdate = (updatedWorkout: Workout) => {
+    // Обновляем тренировку в общем списке
+    setAllWorkouts((prev) =>
+      prev.map((workout) => (workout.id === updatedWorkout.id ? updatedWorkout : workout)),
+    )
+
+    // Обновляем тренировку в списке выбранной даты
+    setSelectedDateWorkouts((prev) =>
+      prev.map((workout) => (workout.id === updatedWorkout.id ? updatedWorkout : workout)),
+    )
+  }
+
+  const handleWorkoutDelete = (workoutId: string) => {
+    // Удаляем тренировку из общего списка
+    setAllWorkouts((prev) => prev.filter((workout) => workout.id !== workoutId))
+
+    // Удаляем тренировку из списка выбранной даты
+    setSelectedDateWorkouts((prev) => prev.filter((workout) => workout.id !== workoutId))
   }
 
   const formatDate = (dateString: string) => {
@@ -42,7 +63,7 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
       {/* Сетка активности */}
       <section className="activity-section">
         <h2>История тренировок</h2>
-        <WorkoutGrid workouts={initialWorkouts} onDaySelect={handleDaySelect} />
+        <WorkoutGrid workouts={allWorkouts} onDaySelect={handleDaySelect} />
       </section>
 
       {/* Заглушка или тренировки за день */}
@@ -55,19 +76,11 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
                 ×
               </button>
             </div>
-            <div className="workouts-list">
-              {selectedDateWorkouts.length > 0 ? (
-                selectedDateWorkouts.map((workout) => (
-                  <div key={workout.id} className="workout-item">
-                    <h4>{workout.name}</h4>
-                    <p>Упражнений: {workout.exercises?.length || 0}</p>
-                    {workout.duration && <p>Длительность: {workout.duration} мин</p>}
-                  </div>
-                ))
-              ) : (
-                <p>Нет тренировок за этот день</p>
-              )}
-            </div>
+            <WorkoutList
+              initialWorkouts={selectedDateWorkouts}
+              onWorkoutUpdate={handleWorkoutUpdate}
+              onWorkoutDelete={handleWorkoutDelete}
+            />
           </div>
         ) : (
           <div className="placeholder-content">
