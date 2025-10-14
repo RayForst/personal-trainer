@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import type { Workout } from '@/payload-types'
 import EditableWorkoutCard from './EditableWorkoutCard'
 
@@ -16,6 +16,11 @@ export default function WorkoutList({
   onWorkoutDelete,
 }: WorkoutListProps) {
   const [workouts, setWorkouts] = useState(initialWorkouts)
+
+  // Синхронизируем состояние с новыми initialWorkouts
+  useEffect(() => {
+    setWorkouts(initialWorkouts)
+  }, [initialWorkouts])
 
   const handleDelete = (workoutId: string) => {
     setWorkouts(workouts.filter((workout) => workout.id !== workoutId))

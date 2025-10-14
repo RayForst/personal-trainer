@@ -182,6 +182,29 @@ export default function EditableWorkoutCard({
 
       {isEditing ? (
         <div className="editable-exercises">
+          <div className="workout-edit-fields">
+            <div className="form-group">
+              <label htmlFor="workout-name">Название тренировки:</label>
+              <input
+                id="workout-name"
+                type="text"
+                value={editedWorkout.name}
+                onChange={(e) => setEditedWorkout({ ...editedWorkout, name: e.target.value })}
+                className="workout-name-input"
+                placeholder="Название тренировки"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="workout-date">Дата тренировки:</label>
+              <input
+                id="workout-date"
+                type="date"
+                value={new Date(editedWorkout.date).toISOString().split('T')[0]}
+                onChange={(e) => setEditedWorkout({ ...editedWorkout, date: e.target.value })}
+                className="workout-date-input"
+              />
+            </div>
+          </div>
           <DragDropContext onDragEnd={handleDragEnd}>
             <Droppable droppableId="exercises">
               {(provided) => (

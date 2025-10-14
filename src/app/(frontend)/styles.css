@@ -220,6 +220,46 @@ body {
   background-color: #c82333;
 }
 
+.workout-edit-fields {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.workout-edit-fields .form-group {
+  margin-bottom: 1rem;
+}
+
+.workout-edit-fields .form-group:last-child {
+  margin-bottom: 0;
+}
+
+.workout-edit-fields label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.workout-name-input,
+.workout-date-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.workout-name-input:focus,
+.workout-date-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
 /* Форма добавления тренировки */
 .add-workout-section {
   background: white;

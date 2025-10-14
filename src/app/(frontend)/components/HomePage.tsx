@@ -34,10 +34,30 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
       prev.map((workout) => (workout.id === updatedWorkout.id ? updatedWorkout : workout)),
     )
 
-    // Обновляем тренировку в списке выбранной даты
-    setSelectedDateWorkouts((prev) =>
-      prev.map((workout) => (workout.id === updatedWorkout.id ? updatedWorkout : workout)),
-    )
+    // Если дата тренировки изменилась, нужно обновить список выбранной даты
+    const originalWorkout = allWorkouts.find((w) => w.id === updatedWorkout.id)
+    const dateChanged = originalWorkout && originalWorkout.date !== updatedWorkout.date
+
+    if (dateChanged && selectedDate) {
+      // Если тренировка была перемещена на другую дату, удаляем её из текущего списка
+      const originalDate = new Date(originalWorkout!.date).toISOString().split('T')[0]
+      if (originalDate === selectedDate) {
+        setSelectedDateWorkouts((prev) =>
+          prev.filter((workout) => workout.id !== updatedWorkout.id),
+        )
+      }
+
+      // Если тренировка была перемещена на выбранную дату, добавляем её
+      const newDate = new Date(updatedWorkout.date).toISOString().split('T')[0]
+      if (newDate === selectedDate) {
+        setSelectedDateWorkouts((prev) => [...prev, updatedWorkout])
+      }
+    } else {
+      // Если дата не изменилась, просто обновляем тренировку в списке выбранной даты
+      setSelectedDateWorkouts((prev) =>
+        prev.map((workout) => (workout.id === updatedWorkout.id ? updatedWorkout : workout)),
+      )
+    }
   }
 
   const handleWorkoutDelete = (workoutId: string) => {
