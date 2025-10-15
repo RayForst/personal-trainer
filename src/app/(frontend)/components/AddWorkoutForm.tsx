@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import type { Workout } from '@/payload-types'
 
 interface AddWorkoutFormProps {
@@ -70,6 +71,19 @@ export default function AddWorkoutForm({ templates }: AddWorkoutFormProps) {
           sets: [{ reps: '', weight: '', duration: '', distance: '', notes: '' }],
         },
       ],
+    }))
+  }
+
+  const handleDragEnd = (result: any) => {
+    if (!result.destination) return
+
+    const newExercises = Array.from(formData.exercises)
+    const [reorderedExercise] = newExercises.splice(result.source.index, 1)
+    newExercises.splice(result.destination.index, 0, reorderedExercise)
+
+    setFormData((prev) => ({
+      ...prev,
+      exercises: newExercises,
     }))
   }
 
@@ -219,115 +233,155 @@ export default function AddWorkoutForm({ templates }: AddWorkoutFormProps) {
 
       <div className="form-group">
         <label>Упражнения:</label>
-        {formData.exercises.map((exercise, exerciseIndex) => (
-          <div key={exerciseIndex} className="exercise-block">
-            <div className="exercise-header">
-              <input
-                type="text"
-                placeholder="Название упражнения"
-                value={exercise.name}
-                onChange={(e) => updateExercise(exerciseIndex, 'name', e.target.value)}
-                required
-              />
-              <button
-                type="button"
-                onClick={() => removeExercise(exerciseIndex)}
-                className="remove-exercise"
-              >
-                Удалить
-              </button>
-            </div>
-
-            <div className="exercise-type">
-              <label>Тип упражнения:</label>
-              <div className="radio-group">
-                <label className="radio-label">
-                  <input
-                    type="radio"
-                    name={`exerciseType-${exerciseIndex}`}
-                    value="strength"
-                    checked={exercise.exerciseType === 'strength'}
-                    onChange={(e) => updateExercise(exerciseIndex, 'exerciseType', e.target.value)}
-                  />
-                  <span>Силовое (вес + повторения)</span>
-                </label>
-                <label className="radio-label">
-                  <input
-                    type="radio"
-                    name={`exerciseType-${exerciseIndex}`}
-                    value="cardio"
-                    checked={exercise.exerciseType === 'cardio'}
-                    onChange={(e) => updateExercise(exerciseIndex, 'exerciseType', e.target.value)}
-                  />
-                  <span>Кардио (время)</span>
-                </label>
-              </div>
-            </div>
-
-            <div className="sets-container">
-              {exercise.sets.map((set, setIndex) => (
-                <div key={setIndex} className="set-row">
-                  <span className="set-number">Подход {setIndex + 1}:</span>
-
-                  {exercise.exerciseType === 'strength' ? (
-                    <>
-                      <input
-                        type="text"
-                        placeholder="Повторения"
-                        value={set.reps}
-                        onChange={(e) => updateSet(exerciseIndex, setIndex, 'reps', e.target.value)}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Вес (кг)"
-                        value={set.weight}
-                        onChange={(e) =>
-                          updateSet(exerciseIndex, setIndex, 'weight', e.target.value)
-                        }
-                      />
-                    </>
-                  ) : (
-                    <>
-                      <input
-                        type="text"
-                        placeholder="Время (мин:сек)"
-                        value={set.duration}
-                        onChange={(e) =>
-                          updateSet(exerciseIndex, setIndex, 'duration', e.target.value)
-                        }
-                      />
-                      <input
-                        type="text"
-                        placeholder="Дистанция (км)"
-                        value={set.distance}
-                        onChange={(e) =>
-                          updateSet(exerciseIndex, setIndex, 'distance', e.target.value)
-                        }
-                      />
-                    </>
-                  )}
-
-                  <input
-                    type="text"
-                    placeholder="Заметки"
-                    value={set.notes}
-                    onChange={(e) => updateSet(exerciseIndex, setIndex, 'notes', e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeSet(exerciseIndex, setIndex)}
-                    className="remove-set"
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="exercises">
+            {(provided) => (
+              <div {...provided.droppableProps} ref={provided.innerRef} className="exercises-list">
+                {formData.exercises.map((exercise, exerciseIndex) => (
+                  <Draggable
+                    key={exerciseIndex}
+                    draggableId={`exercise-${exerciseIndex}`}
+                    index={exerciseIndex}
                   >
-                    ×
-                  </button>
-                </div>
-              ))}
-              <button type="button" onClick={() => addSet(exerciseIndex)} className="add-set">
-                + Добавить подход
-              </button>
-            </div>
-          </div>
-        ))}
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        className={`exercise-block ${snapshot.isDragging ? 'dragging' : ''}`}
+                      >
+                        <div className="exercise-header">
+                          <div
+                            {...provided.dragHandleProps}
+                            className="drag-handle"
+                            title="Перетащите для изменения порядка"
+                          >
+                            ⋮⋮
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="Название упражнения"
+                            value={exercise.name}
+                            onChange={(e) => updateExercise(exerciseIndex, 'name', e.target.value)}
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeExercise(exerciseIndex)}
+                            className="remove-exercise"
+                          >
+                            Удалить
+                          </button>
+                        </div>
+
+                        <div className="exercise-type">
+                          <label>Тип упражнения:</label>
+                          <div className="radio-group">
+                            <label className="radio-label">
+                              <input
+                                type="radio"
+                                name={`exerciseType-${exerciseIndex}`}
+                                value="strength"
+                                checked={exercise.exerciseType === 'strength'}
+                                onChange={(e) =>
+                                  updateExercise(exerciseIndex, 'exerciseType', e.target.value)
+                                }
+                              />
+                              <span>Силовое (вес + повторения)</span>
+                            </label>
+                            <label className="radio-label">
+                              <input
+                                type="radio"
+                                name={`exerciseType-${exerciseIndex}`}
+                                value="cardio"
+                                checked={exercise.exerciseType === 'cardio'}
+                                onChange={(e) =>
+                                  updateExercise(exerciseIndex, 'exerciseType', e.target.value)
+                                }
+                              />
+                              <span>Кардио (время)</span>
+                            </label>
+                          </div>
+                        </div>
+
+                        <div className="sets-container">
+                          {exercise.sets.map((set, setIndex) => (
+                            <div key={setIndex} className="set-row">
+                              <span className="set-number">Подход {setIndex + 1}:</span>
+
+                              {exercise.exerciseType === 'strength' ? (
+                                <>
+                                  <input
+                                    type="text"
+                                    placeholder="Повторения"
+                                    value={set.reps}
+                                    onChange={(e) =>
+                                      updateSet(exerciseIndex, setIndex, 'reps', e.target.value)
+                                    }
+                                  />
+                                  <input
+                                    type="text"
+                                    placeholder="Вес (кг)"
+                                    value={set.weight}
+                                    onChange={(e) =>
+                                      updateSet(exerciseIndex, setIndex, 'weight', e.target.value)
+                                    }
+                                  />
+                                </>
+                              ) : (
+                                <>
+                                  <input
+                                    type="text"
+                                    placeholder="Время (мин:сек)"
+                                    value={set.duration}
+                                    onChange={(e) =>
+                                      updateSet(exerciseIndex, setIndex, 'duration', e.target.value)
+                                    }
+                                  />
+                                  <input
+                                    type="text"
+                                    placeholder="Дистанция (км)"
+                                    value={set.distance}
+                                    onChange={(e) =>
+                                      updateSet(exerciseIndex, setIndex, 'distance', e.target.value)
+                                    }
+                                  />
+                                </>
+                              )}
+
+                              <input
+                                type="text"
+                                placeholder="Заметки"
+                                value={set.notes}
+                                onChange={(e) =>
+                                  updateSet(exerciseIndex, setIndex, 'notes', e.target.value)
+                                }
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeSet(exerciseIndex, setIndex)}
+                                className="remove-set"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => addSet(exerciseIndex)}
+                            className="add-set"
+                          >
+                            + Добавить подход
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
 
         <button type="button" onClick={addExercise} className="add-exercise">
           + Добавить упражнение

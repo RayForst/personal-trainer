@@ -260,6 +260,38 @@ body {
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
+/* Drag & Drop для формы добавления тренировки */
+.exercises-list {
+  min-height: 50px;
+}
+
+.exercise-block.dragging {
+  opacity: 0.5;
+  transform: rotate(5deg);
+}
+
+.drag-handle {
+  cursor: grab;
+  padding: 0.5rem;
+  color: #6c757d;
+  font-size: 1.2rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.drag-handle:hover {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
 /* Форма добавления тренировки */
 .add-workout-section {
   background: white;
