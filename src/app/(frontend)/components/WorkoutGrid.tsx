@@ -86,9 +86,6 @@ export default function WorkoutGrid({ workouts, onDaySelect }: WorkoutGridProps)
   return (
     <div className="workout-grid">
       <div className="grid-header">
-        <div className="grid-title">
-          <span>Последний год активности</span>
-        </div>
         <div className="grid-legend">
           <span>Меньше</span>
           <div className="legend-squares">

@@ -83,7 +83,9 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
     <div className="main-grid">
       {/* Сетка активности */}
       <section className="activity-section">
-        <h2>История тренировок</h2>
+        <h2>
+          История тренировок<sup>Последний год активности</sup>
+        </h2>
         <WorkoutGrid workouts={allWorkouts} onDaySelect={handleDaySelect} />
       </section>
 
@@ -95,7 +97,9 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
         {selectedDate ? (
           <div className="workout-day-content">
             <div className="workout-day-header">
-              <h3>Тренировки за {formatDate(selectedDate)}</h3>
+              <h3>
+                Тренировки за день <span className="date-info">({formatDate(selectedDate)})</span>
+              </h3>
               <button onClick={() => setSelectedDate(null)} className="close-btn">
                 ×
               </button>

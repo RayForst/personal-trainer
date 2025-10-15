@@ -21,6 +21,28 @@ interface WorkoutStats {
 }
 
 export default function WorkoutStats({ workouts, selectedDate }: WorkoutStatsProps) {
+  // Функция для форматирования времени из минут в мм:сс
+  const formatDuration = (minutes: number): string => {
+    if (minutes === 0) return '00:00'
+
+    const totalSeconds = Math.round(minutes * 60)
+    const mins = Math.floor(totalSeconds / 60)
+    const secs = totalSeconds % 60
+
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  }
+
+  // Функция для форматирования даты
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('ru-RU', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      weekday: 'long',
+    })
+  }
+
   const calculateStats = (workouts: Workout[]): WorkoutStats => {
     let totalTonnage = 0
     let totalSets = 0
@@ -56,15 +78,33 @@ export default function WorkoutStats({ workouts, selectedDate }: WorkoutStatsPro
 
           exercise.sets?.forEach((set) => {
             if (set.duration) {
-              // Парсим время в формате "мм:сс" или просто число (минуты)
-              const durationStr = set.duration
+              const durationStr = set.duration.trim()
               let minutes = 0
 
               if (durationStr.includes(':')) {
-                const [mins, secs] = durationStr.split(':').map(Number)
-                minutes = mins + (secs || 0) / 60
+                // Формат "мм:сс" или "чч:мм:сс"
+                const parts = durationStr.split(':').map(Number)
+                if (parts.length === 2) {
+                  // мм:сс
+                  minutes = parts[0] + (parts[1] || 0) / 60
+                } else if (parts.length === 3) {
+                  // чч:мм:сс
+                  minutes = parts[0] * 60 + parts[1] + (parts[2] || 0) / 60
+                }
               } else {
-                minutes = parseFloat(durationStr) || 0
+                // Просто число - определяем формат по значению
+                // Логика: если число <= 300, считаем секундами (разумный максимум для одного подхода)
+                // Если больше 300, считаем минутами (длительные кардио сессии)
+                const num = parseFloat(durationStr)
+                if (!isNaN(num)) {
+                  if (num <= 300) {
+                    // Секунды -> минуты
+                    minutes = num / 60
+                  } else {
+                    // Уже минуты
+                    minutes = num
+                  }
+                }
               }
 
               totalDuration += minutes
@@ -103,7 +143,9 @@ export default function WorkoutStats({ workouts, selectedDate }: WorkoutStatsPro
 
   return (
     <section className="stats-section">
-      <h2>Статистика дня</h2>
+      <h2>
+        Статистика дня <span className="date-info">({formatDate(selectedDate)})</span>
+      </h2>
       <div className="stats-grid">
         <div className="stat-card primary">
           <div className="stat-value">{stats.totalTonnage.toLocaleString()}</div>
@@ -141,8 +183,8 @@ export default function WorkoutStats({ workouts, selectedDate }: WorkoutStatsPro
 
         {stats.totalDuration > 0 && (
           <div className="stat-card">
-            <div className="stat-value">{stats.totalDuration}</div>
-            <div className="stat-label">мин кардио</div>
+            <div className="stat-value">{formatDuration(stats.totalDuration)}</div>
+            <div className="stat-label">кардио</div>
           </div>
         )}
 
