@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import WorkoutGrid from './WorkoutGrid'
 import AddWorkoutForm from './AddWorkoutForm'
 import WorkoutList from '../workout/[date]/components/WorkoutList'
+import WorkoutStats from './WorkoutStats'
 import type { Workout } from '@/payload-types'
 
 interface HomePageProps {
@@ -85,6 +86,9 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
         <h2>История тренировок</h2>
         <WorkoutGrid workouts={allWorkouts} onDaySelect={handleDaySelect} />
       </section>
+
+      {/* Статистика дня */}
+      <WorkoutStats workouts={selectedDateWorkouts} selectedDate={selectedDate} />
 
       {/* Заглушка или тренировки за день */}
       <section className="modal-placeholder">
