@@ -8,7 +8,10 @@ interface AddWorkoutFormProps {
   templates: Workout[]
 }
 
+type TabType = 'workout' | 'skip'
+
 export default function AddWorkoutForm({ templates }: AddWorkoutFormProps) {
+  const [activeTab, setActiveTab] = useState<TabType>('workout')
   const [formData, setFormData] = useState({
     name: '',
     date: new Date().toISOString().split('T')[0],
@@ -29,6 +32,16 @@ export default function AddWorkoutForm({ templates }: AddWorkoutFormProps) {
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Состояние для формы пропуска
+  const [skipData, setSkipData] = useState({
+    date: new Date().toISOString().split('T')[0],
+    endDate: '',
+    reason: '',
+    customReason: '',
+    color: 'blue' as 'blue' | 'red' | 'orange' | 'yellow',
+    notes: '',
+  })
 
   const handleTemplateChange = (templateId: string) => {
     const template = templates.find((t) => t.id === templateId)
@@ -186,231 +199,466 @@ export default function AddWorkoutForm({ templates }: AddWorkoutFormProps) {
     }
   }
 
+  const handleSkipSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+
+    try {
+      // Определяем диапазон дат
+      const startDate = new Date(skipData.date)
+      const endDate = skipData.endDate ? new Date(skipData.endDate) : startDate
+
+      // Создаем массив дат для пропуска
+      const datesToSkip: string[] = []
+      const currentDate = new Date(startDate)
+
+      while (currentDate <= endDate) {
+        datesToSkip.push(currentDate.toISOString().split('T')[0])
+        currentDate.setDate(currentDate.getDate() + 1)
+      }
+
+      // Отправляем один запрос с массивом дат
+      const response = await fetch('/api/workouts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: 'Пропуск тренировки',
+          dates: datesToSkip,
+          skipEndDate: skipData.endDate || skipData.date,
+          skipReason: skipData.reason,
+          customReason: skipData.customReason,
+          skipColor: skipData.color,
+          notes: skipData.notes,
+        }),
+      })
+
+      if (response.ok) {
+        // Сброс формы пропуска
+        setSkipData({
+          date: new Date().toISOString().split('T')[0],
+          endDate: '',
+          reason: '',
+          customReason: '',
+          color: 'blue',
+          notes: '',
+        })
+        alert(`Пропуск тренировки отмечен для ${datesToSkip.length} дня(ей)!`)
+        window.location.reload()
+      } else {
+        alert('Ошибка при отметке пропуска')
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Ошибка при отметке пропуска')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="add-workout-form">
-      <div className="form-group">
-        <label htmlFor="name">Название тренировки:</label>
-        <input
-          type="text"
-          id="name"
-          placeholder="Например: Утренняя тренировка, День ног, Кардио"
-          value={formData.name}
-          onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-          required
-        />
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="template">Повторить предыдущую тренировку:</label>
-        <select
-          id="template"
-          value={formData.template}
-          onChange={(e) => handleTemplateChange(e.target.value)}
+    <div className="add-workout-form-container">
+      {/* Табы */}
+      <div className="form-tabs">
+        <button
+          type="button"
+          className={`tab-button ${activeTab === 'workout' ? 'active' : ''}`}
+          onClick={() => setActiveTab('workout')}
         >
-          <option value="">Выберите тренировку (опционально)</option>
-          {templates.map((template) => (
-            <option key={template.id} value={template.id}>
-              {template.name} ({new Date(template.date).toLocaleDateString('ru-RU')})
-            </option>
-          ))}
-        </select>
-        <small className="form-help">
-          Выберите предыдущую тренировку, чтобы повторить упражнения, или добавьте упражнения
-          вручную ниже
-        </small>
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="date">Дата тренировки:</label>
-        <input
-          type="date"
-          id="date"
-          value={formData.date}
-          onChange={(e) => setFormData((prev) => ({ ...prev, date: e.target.value }))}
-          required
-        />
-      </div>
-
-      <div className="form-group">
-        <label>Упражнения:</label>
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <Droppable droppableId="exercises">
-            {(provided) => (
-              <div {...provided.droppableProps} ref={provided.innerRef} className="exercises-list">
-                {formData.exercises.map((exercise, exerciseIndex) => (
-                  <Draggable
-                    key={exerciseIndex}
-                    draggableId={`exercise-${exerciseIndex}`}
-                    index={exerciseIndex}
-                  >
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        className={`exercise-block ${snapshot.isDragging ? 'dragging' : ''}`}
-                      >
-                        <div className="exercise-header">
-                          <div
-                            {...provided.dragHandleProps}
-                            className="drag-handle"
-                            title="Перетащите для изменения порядка"
-                          >
-                            ⋮⋮
-                          </div>
-                          <input
-                            type="text"
-                            placeholder="Название упражнения"
-                            value={exercise.name}
-                            onChange={(e) => updateExercise(exerciseIndex, 'name', e.target.value)}
-                            required
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeExercise(exerciseIndex)}
-                            className="remove-exercise"
-                          >
-                            Удалить
-                          </button>
-                        </div>
-
-                        <div className="exercise-type">
-                          <label>Тип упражнения:</label>
-                          <div className="radio-group">
-                            <label className="radio-label">
-                              <input
-                                type="radio"
-                                name={`exerciseType-${exerciseIndex}`}
-                                value="strength"
-                                checked={exercise.exerciseType === 'strength'}
-                                onChange={(e) =>
-                                  updateExercise(exerciseIndex, 'exerciseType', e.target.value)
-                                }
-                              />
-                              <span>Силовое (вес + повторения)</span>
-                            </label>
-                            <label className="radio-label">
-                              <input
-                                type="radio"
-                                name={`exerciseType-${exerciseIndex}`}
-                                value="cardio"
-                                checked={exercise.exerciseType === 'cardio'}
-                                onChange={(e) =>
-                                  updateExercise(exerciseIndex, 'exerciseType', e.target.value)
-                                }
-                              />
-                              <span>Кардио (время)</span>
-                            </label>
-                          </div>
-                        </div>
-
-                        <div className="sets-container">
-                          {exercise.sets.map((set, setIndex) => (
-                            <div key={setIndex} className="set-row">
-                              <span className="set-number">Подход {setIndex + 1}:</span>
-
-                              {exercise.exerciseType === 'strength' ? (
-                                <>
-                                  <input
-                                    type="text"
-                                    placeholder="Повторения"
-                                    value={set.reps}
-                                    onChange={(e) =>
-                                      updateSet(exerciseIndex, setIndex, 'reps', e.target.value)
-                                    }
-                                  />
-                                  <input
-                                    type="text"
-                                    placeholder="Вес (кг)"
-                                    value={set.weight}
-                                    onChange={(e) =>
-                                      updateSet(exerciseIndex, setIndex, 'weight', e.target.value)
-                                    }
-                                  />
-                                </>
-                              ) : (
-                                <>
-                                  <input
-                                    type="text"
-                                    placeholder="Время (мин:сек)"
-                                    value={set.duration}
-                                    onChange={(e) =>
-                                      updateSet(exerciseIndex, setIndex, 'duration', e.target.value)
-                                    }
-                                  />
-                                  <input
-                                    type="text"
-                                    placeholder="Дистанция (км)"
-                                    value={set.distance}
-                                    onChange={(e) =>
-                                      updateSet(exerciseIndex, setIndex, 'distance', e.target.value)
-                                    }
-                                  />
-                                </>
-                              )}
-
-                              <input
-                                type="text"
-                                placeholder="Заметки"
-                                value={set.notes}
-                                onChange={(e) =>
-                                  updateSet(exerciseIndex, setIndex, 'notes', e.target.value)
-                                }
-                              />
-                              <button
-                                type="button"
-                                onClick={() => removeSet(exerciseIndex, setIndex)}
-                                className="remove-set"
-                              >
-                                ×
-                              </button>
-                            </div>
-                          ))}
-                          <button
-                            type="button"
-                            onClick={() => addSet(exerciseIndex)}
-                            className="add-set"
-                          >
-                            + Добавить подход
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
-
-        <button type="button" onClick={addExercise} className="add-exercise">
-          + Добавить упражнение
+          Добавить тренировку
+        </button>
+        <button
+          type="button"
+          className={`tab-button ${activeTab === 'skip' ? 'active' : ''}`}
+          onClick={() => setActiveTab('skip')}
+        >
+          Пропуск
         </button>
       </div>
 
-      <div className="form-group">
-        <label htmlFor="duration">Длительность тренировки (минуты):</label>
-        <input
-          type="number"
-          id="duration"
-          value={formData.duration}
-          onChange={(e) => setFormData((prev) => ({ ...prev, duration: e.target.value }))}
-        />
-      </div>
+      {/* Контент табов */}
+      {activeTab === 'workout' ? (
+        <form onSubmit={handleSubmit} className="add-workout-form">
+          <div className="form-group">
+            <label htmlFor="name">Название тренировки:</label>
+            <input
+              type="text"
+              id="name"
+              placeholder="Например: Утренняя тренировка, День ног, Кардио"
+              value={formData.name}
+              onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+              required
+            />
+          </div>
 
-      <div className="form-group">
-        <label htmlFor="notes">Заметки:</label>
-        <textarea
-          id="notes"
-          value={formData.notes}
-          onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
-          rows={3}
-        />
-      </div>
+          <div className="form-group">
+            <label htmlFor="template">Повторить предыдущую тренировку:</label>
+            <select
+              id="template"
+              value={formData.template}
+              onChange={(e) => handleTemplateChange(e.target.value)}
+            >
+              <option value="">Выберите тренировку (опционально)</option>
+              {templates.map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.name} ({new Date(template.date).toLocaleDateString('ru-RU')})
+                </option>
+              ))}
+            </select>
+            <small className="form-help">
+              Выберите предыдущую тренировку, чтобы повторить упражнения, или добавьте упражнения
+              вручную ниже
+            </small>
+          </div>
 
-      <button type="submit" disabled={isSubmitting} className="submit-btn">
-        {isSubmitting ? 'Добавление...' : 'Добавить тренировку'}
-      </button>
-    </form>
+          <div className="form-group">
+            <label htmlFor="date">Дата тренировки:</label>
+            <input
+              type="date"
+              id="date"
+              value={formData.date}
+              onChange={(e) => setFormData((prev) => ({ ...prev, date: e.target.value }))}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Упражнения:</label>
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <Droppable droppableId="exercises">
+                {(provided) => (
+                  <div
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                    className="exercises-list"
+                  >
+                    {formData.exercises.map((exercise, exerciseIndex) => (
+                      <Draggable
+                        key={exerciseIndex}
+                        draggableId={`exercise-${exerciseIndex}`}
+                        index={exerciseIndex}
+                      >
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            className={`exercise-block ${snapshot.isDragging ? 'dragging' : ''}`}
+                          >
+                            <div className="exercise-header">
+                              <div
+                                {...provided.dragHandleProps}
+                                className="drag-handle"
+                                title="Перетащите для изменения порядка"
+                              >
+                                ⋮⋮
+                              </div>
+                              <input
+                                type="text"
+                                placeholder="Название упражнения"
+                                value={exercise.name}
+                                onChange={(e) =>
+                                  updateExercise(exerciseIndex, 'name', e.target.value)
+                                }
+                                required
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeExercise(exerciseIndex)}
+                                className="remove-exercise"
+                              >
+                                Удалить
+                              </button>
+                            </div>
+
+                            <div className="exercise-type">
+                              <label>Тип упражнения:</label>
+                              <div className="radio-group">
+                                <label className="radio-label">
+                                  <input
+                                    type="radio"
+                                    name={`exerciseType-${exerciseIndex}`}
+                                    value="strength"
+                                    checked={exercise.exerciseType === 'strength'}
+                                    onChange={(e) =>
+                                      updateExercise(exerciseIndex, 'exerciseType', e.target.value)
+                                    }
+                                  />
+                                  <span>Силовое (вес + повторения)</span>
+                                </label>
+                                <label className="radio-label">
+                                  <input
+                                    type="radio"
+                                    name={`exerciseType-${exerciseIndex}`}
+                                    value="cardio"
+                                    checked={exercise.exerciseType === 'cardio'}
+                                    onChange={(e) =>
+                                      updateExercise(exerciseIndex, 'exerciseType', e.target.value)
+                                    }
+                                  />
+                                  <span>Кардио (время)</span>
+                                </label>
+                              </div>
+                            </div>
+
+                            <div className="sets-container">
+                              {exercise.sets.map((set, setIndex) => (
+                                <div key={setIndex} className="set-row">
+                                  <span className="set-number">Подход {setIndex + 1}:</span>
+
+                                  {exercise.exerciseType === 'strength' ? (
+                                    <>
+                                      <input
+                                        type="text"
+                                        placeholder="Повторения"
+                                        value={set.reps}
+                                        onChange={(e) =>
+                                          updateSet(exerciseIndex, setIndex, 'reps', e.target.value)
+                                        }
+                                      />
+                                      <input
+                                        type="text"
+                                        placeholder="Вес (кг)"
+                                        value={set.weight}
+                                        onChange={(e) =>
+                                          updateSet(
+                                            exerciseIndex,
+                                            setIndex,
+                                            'weight',
+                                            e.target.value,
+                                          )
+                                        }
+                                      />
+                                    </>
+                                  ) : (
+                                    <>
+                                      <input
+                                        type="text"
+                                        placeholder="Время (мин:сек)"
+                                        value={set.duration}
+                                        onChange={(e) =>
+                                          updateSet(
+                                            exerciseIndex,
+                                            setIndex,
+                                            'duration',
+                                            e.target.value,
+                                          )
+                                        }
+                                      />
+                                      <input
+                                        type="text"
+                                        placeholder="Дистанция (км)"
+                                        value={set.distance}
+                                        onChange={(e) =>
+                                          updateSet(
+                                            exerciseIndex,
+                                            setIndex,
+                                            'distance',
+                                            e.target.value,
+                                          )
+                                        }
+                                      />
+                                    </>
+                                  )}
+
+                                  <input
+                                    type="text"
+                                    placeholder="Заметки"
+                                    value={set.notes}
+                                    onChange={(e) =>
+                                      updateSet(exerciseIndex, setIndex, 'notes', e.target.value)
+                                    }
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => removeSet(exerciseIndex, setIndex)}
+                                    className="remove-set"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              ))}
+                              <button
+                                type="button"
+                                onClick={() => addSet(exerciseIndex)}
+                                className="add-set"
+                              >
+                                + Добавить подход
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+
+            <button type="button" onClick={addExercise} className="add-exercise">
+              + Добавить упражнение
+            </button>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="duration">Длительность тренировки (минуты):</label>
+            <input
+              type="number"
+              id="duration"
+              value={formData.duration}
+              onChange={(e) => setFormData((prev) => ({ ...prev, duration: e.target.value }))}
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="notes">Заметки:</label>
+            <textarea
+              id="notes"
+              value={formData.notes}
+              onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
+              rows={3}
+            />
+          </div>
+
+          <button type="submit" disabled={isSubmitting} className="submit-btn">
+            {isSubmitting ? 'Добавление...' : 'Добавить тренировку'}
+          </button>
+        </form>
+      ) : (
+        <form onSubmit={handleSkipSubmit} className="add-workout-form">
+          <div className="form-group">
+            <label htmlFor="skip-date">Дата начала пропуска:</label>
+            <input
+              type="date"
+              id="skip-date"
+              value={skipData.date}
+              onChange={(e) => setSkipData((prev) => ({ ...prev, date: e.target.value }))}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="skip-end-date">Дата окончания пропуска (опционально):</label>
+            <input
+              type="date"
+              id="skip-end-date"
+              value={skipData.endDate}
+              onChange={(e) => setSkipData((prev) => ({ ...prev, endDate: e.target.value }))}
+              min={skipData.date}
+            />
+            <small className="form-help">Оставьте пустым для пропуска одного дня</small>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="skip-reason">Причина пропуска:</label>
+            <select
+              id="skip-reason"
+              value={skipData.reason}
+              onChange={(e) => setSkipData((prev) => ({ ...prev, reason: e.target.value }))}
+              required
+            >
+              <option value="">Выберите причину</option>
+              <option value="injury">Травма</option>
+              <option value="illness">Болезнь</option>
+              <option value="gym-closed">Закрытый зал</option>
+              <option value="natural-disaster">Стихийное бедствие</option>
+              <option value="work">Работа</option>
+              <option value="travel">Поездка</option>
+              <option value="family">Семейные дела</option>
+              <option value="lazy">Лень</option>
+              <option value="other">Другое</option>
+            </select>
+          </div>
+
+          {skipData.reason === 'other' && (
+            <div className="form-group">
+              <label htmlFor="custom-reason">Укажите причину:</label>
+              <input
+                type="text"
+                id="custom-reason"
+                placeholder="Введите причину пропуска"
+                value={skipData.customReason}
+                onChange={(e) => setSkipData((prev) => ({ ...prev, customReason: e.target.value }))}
+                required={skipData.reason === 'other'}
+              />
+            </div>
+          )}
+
+          <div className="form-group">
+            <label>Цвет для отображения:</label>
+            <div className="color-options">
+              <label className="color-option">
+                <input
+                  type="radio"
+                  name="skip-color"
+                  value="blue"
+                  checked={skipData.color === 'blue'}
+                  onChange={(e) =>
+                    setSkipData((prev) => ({ ...prev, color: e.target.value as any }))
+                  }
+                />
+                <span className="color-preview blue"></span>
+                <span>Синий</span>
+              </label>
+              <label className="color-option">
+                <input
+                  type="radio"
+                  name="skip-color"
+                  value="red"
+                  checked={skipData.color === 'red'}
+                  onChange={(e) =>
+                    setSkipData((prev) => ({ ...prev, color: e.target.value as any }))
+                  }
+                />
+                <span className="color-preview red"></span>
+                <span>Красный</span>
+              </label>
+              <label className="color-option">
+                <input
+                  type="radio"
+                  name="skip-color"
+                  value="orange"
+                  checked={skipData.color === 'orange'}
+                  onChange={(e) =>
+                    setSkipData((prev) => ({ ...prev, color: e.target.value as any }))
+                  }
+                />
+                <span className="color-preview orange"></span>
+                <span>Оранжевый</span>
+              </label>
+              <label className="color-option">
+                <input
+                  type="radio"
+                  name="skip-color"
+                  value="yellow"
+                  checked={skipData.color === 'yellow'}
+                  onChange={(e) =>
+                    setSkipData((prev) => ({ ...prev, color: e.target.value as any }))
+                  }
+                />
+                <span className="color-preview yellow"></span>
+                <span>Желтый</span>
+              </label>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="skip-notes">Заметки:</label>
+            <textarea
+              id="skip-notes"
+              value={skipData.notes}
+              onChange={(e) => setSkipData((prev) => ({ ...prev, notes: e.target.value }))}
+              rows={3}
+              placeholder="Дополнительные заметки о пропуске..."
+            />
+          </div>
+
+          <button type="submit" disabled={isSubmitting} className="submit-btn">
+            {isSubmitting ? 'Отметка пропуска...' : 'Отметить пропуск'}
+          </button>
+        </form>
+      )}
+    </div>
   )
 }

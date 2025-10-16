@@ -122,5 +122,64 @@ export const Workouts: CollectionConfig = {
       type: 'number',
       label: 'Длительность тренировки (минуты)',
     },
+    {
+      name: 'isSkip',
+      type: 'checkbox',
+      label: 'Пропуск тренировки',
+      defaultValue: false,
+    },
+    {
+      name: 'skipEndDate',
+      type: 'date',
+      label: 'Дата окончания пропуска (для диапазона)',
+      admin: {
+        condition: (data) => data.isSkip === true,
+        date: {
+          pickerAppearance: 'dayOnly',
+        },
+      },
+    },
+    {
+      name: 'skipReason',
+      type: 'select',
+      label: 'Причина пропуска',
+      options: [
+        { label: 'Травма', value: 'injury' },
+        { label: 'Болезнь', value: 'illness' },
+        { label: 'Закрытый зал', value: 'gym-closed' },
+        { label: 'Стихийное бедствие', value: 'natural-disaster' },
+        { label: 'Работа', value: 'work' },
+        { label: 'Поездка', value: 'travel' },
+        { label: 'Семейные дела', value: 'family' },
+        { label: 'Лень', value: 'lazy' },
+        { label: 'Другое', value: 'other' },
+      ],
+      admin: {
+        condition: (data) => data.isSkip === true,
+      },
+    },
+    {
+      name: 'customReason',
+      type: 'text',
+      label: 'Укажите причину пропуска',
+      admin: {
+        condition: (data) => data.isSkip === true && data.skipReason === 'other',
+      },
+    },
+    {
+      name: 'skipColor',
+      type: 'select',
+      label: 'Цвет для отображения пропуска',
+      options: [
+        { label: 'Синий', value: 'blue' },
+        { label: 'Красный', value: 'red' },
+        { label: 'Оранжевый', value: 'orange' },
+        { label: 'Желтый', value: 'yellow' },
+      ],
+      defaultValue: 'blue',
+      admin: {
+        condition: (data) => data.isSkip === true,
+      },
+    },
   ],
 }

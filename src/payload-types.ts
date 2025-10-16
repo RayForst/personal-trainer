@@ -188,6 +188,13 @@ export interface Workout {
     | null;
   notes?: string | null;
   duration?: number | null;
+  isSkip?: boolean | null;
+  skipEndDate?: string | null;
+  skipReason?:
+    | ('injury' | 'illness' | 'gym-closed' | 'natural-disaster' | 'work' | 'travel' | 'family' | 'lazy' | 'other')
+    | null;
+  customReason?: string | null;
+  skipColor?: ('blue' | 'red' | 'orange' | 'yellow') | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -347,6 +354,11 @@ export interface WorkoutsSelect<T extends boolean = true> {
       };
   notes?: T;
   duration?: T;
+  isSkip?: T;
+  skipEndDate?: T;
+  skipReason?: T;
+  customReason?: T;
+  skipColor?: T;
   updatedAt?: T;
   createdAt?: T;
 }

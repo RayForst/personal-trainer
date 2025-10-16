@@ -384,6 +384,93 @@ body {
   overflow-y: auto;
 }
 
+/* Контейнер формы с табами */
+.add-workout-form-container {
+  width: 100%;
+}
+
+/* Табы */
+.form-tabs {
+  display: flex;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  color: #6c757d;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+  color: #495057;
+  background: #f8f9fa;
+}
+
+.tab-button.active {
+  color: #007bff;
+  border-bottom-color: #007bff;
+  background: #f8f9fa;
+}
+
+/* Цветовые опции для пропусков */
+.color-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.color-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.color-option:hover {
+  border-color: #007bff;
+  background: #f8f9fa;
+}
+
+.color-option input[type="radio"] {
+  margin: 0;
+}
+
+.color-preview {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+.color-preview.blue {
+  background-color: #007bff;
+}
+
+.color-preview.red {
+  background-color: #dc3545;
+}
+
+.color-preview.orange {
+  background-color: #fd7e14;
+}
+
+.color-preview.yellow {
+  background-color: #ffc107;
+}
+
 .add-workout-section h2 {
   margin: 0 0 1.5rem 0;
   color: #2c3e50;
@@ -963,6 +1050,16 @@ body {
   
   .stat-value {
     font-size: 1.5rem;
+  }
+  
+  .color-options {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  
+  .tab-button {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
   }
   
   .set-row {

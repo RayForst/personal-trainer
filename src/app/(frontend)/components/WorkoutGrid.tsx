@@ -19,6 +19,26 @@ export default function WorkoutGrid({ workouts, onDaySelect }: WorkoutGridProps)
       workoutsByDate.set(date, [])
     }
     workoutsByDate.get(date)!.push(workout)
+
+    // Если это пропуск с диапазоном дат, добавляем его для всех дат в диапазоне
+    if (workout.isSkip && workout.skipEndDate && workout.skipEndDate !== workout.date) {
+      const startDate = new Date(workout.date)
+      const endDate = new Date(workout.skipEndDate)
+      const currentDate = new Date(startDate)
+
+      while (currentDate <= endDate) {
+        const dateString = currentDate.toISOString().split('T')[0]
+        if (!workoutsByDate.has(dateString)) {
+          workoutsByDate.set(dateString, [])
+        }
+        // Добавляем копию пропуска для каждой даты в диапазоне
+        workoutsByDate.get(dateString)!.push({
+          ...workout,
+          date: dateString,
+        })
+        currentDate.setDate(currentDate.getDate() + 1)
+      }
+    }
   })
 
   // Генерируем последние 365 дней
@@ -67,7 +87,28 @@ export default function WorkoutGrid({ workouts, onDaySelect }: WorkoutGridProps)
     },
   )
 
-  const getIntensityColor = (workoutCount: number) => {
+  const getIntensityColor = (workouts: Workout[]) => {
+    // Проверяем, есть ли пропуски
+    const skipWorkouts = workouts.filter((workout) => workout.isSkip)
+    if (skipWorkouts.length > 0) {
+      // Возвращаем цвет первого пропуска (если их несколько)
+      const skipColor = skipWorkouts[0].skipColor
+      switch (skipColor) {
+        case 'blue':
+          return '#007bff'
+        case 'red':
+          return '#dc3545'
+        case 'orange':
+          return '#fd7e14'
+        case 'yellow':
+          return '#ffc107'
+        default:
+          return '#007bff'
+      }
+    }
+
+    // Обычная логика для тренировок
+    const workoutCount = workouts.filter((workout) => !workout.isSkip).length
     if (workoutCount === 0) return '#ebedf0'
     if (workoutCount === 1) return '#c6e48b'
     if (workoutCount === 2) return '#7bc96f'
@@ -79,8 +120,20 @@ export default function WorkoutGrid({ workouts, onDaySelect }: WorkoutGridProps)
     if (day.workouts.length === 0) {
       return `${day.date}: Нет тренировок`
     }
-    const workoutNames = day.workouts.map((w) => w.name).join(', ')
-    return `${day.date}: ${day.workouts.length} тренировка(ок) - ${workoutNames}`
+
+    const skipWorkouts = day.workouts.filter((workout) => workout.isSkip)
+    const regularWorkouts = day.workouts.filter((workout) => !workout.isSkip)
+
+    if (skipWorkouts.length > 0) {
+      const skipReason =
+        skipWorkouts[0].skipReason === 'other'
+          ? skipWorkouts[0].customReason
+          : skipWorkouts[0].skipReason
+      return `${day.date}: Пропуск - ${skipReason}`
+    }
+
+    const workoutNames = regularWorkouts.map((workout) => workout.name).join(', ')
+    return `${day.date}: ${regularWorkouts.length} тренировка(ок) - ${workoutNames}`
   }
 
   return (
@@ -89,13 +142,17 @@ export default function WorkoutGrid({ workouts, onDaySelect }: WorkoutGridProps)
         <div className="grid-legend">
           <span>Меньше</span>
           <div className="legend-squares">
-            {[0, 1, 2, 3, 4].map((level) => (
-              <div
-                key={level}
-                className="legend-square"
-                style={{ backgroundColor: getIntensityColor(level) }}
-              />
-            ))}
+            {[0, 1, 2, 3, 4].map((level) => {
+              // Создаем массив тренировок для каждого уровня
+              const mockWorkouts = Array(level).fill({ isSkip: false })
+              return (
+                <div
+                  key={level}
+                  className="legend-square"
+                  style={{ backgroundColor: getIntensityColor(mockWorkouts) }}
+                />
+              )
+            })}
           </div>
           <span>Больше</span>
         </div>
@@ -124,7 +181,7 @@ export default function WorkoutGrid({ workouts, onDaySelect }: WorkoutGridProps)
                   key={`${day.date}-${dayIndex}`}
                   className="day-square"
                   style={{
-                    backgroundColor: getIntensityColor(day.workouts.length),
+                    backgroundColor: getIntensityColor(day.workouts),
                     cursor: 'pointer',
                   }}
                   title={getTooltipText(day)}

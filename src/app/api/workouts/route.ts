@@ -7,19 +7,58 @@ export async function POST(request: NextRequest) {
     const payload = await getPayload({ config })
     const body = await request.json()
 
-    const workout = await payload.create({
-      collection: 'workouts',
-      data: {
-        name: body.name,
-        date: body.date,
-        template: body.template || null,
-        exercises: body.exercises.map((exercise: any) => ({
+    // Если это массив дат для пропуска (оптимизация)
+    if (body.dates && Array.isArray(body.dates)) {
+      const workouts = []
+      for (const date of body.dates) {
+        const workoutData = {
+          name: body.name,
+          date: date,
+          notes: body.notes,
+          isSkip: true,
+          skipReason: body.skipReason,
+          customReason: body.customReason,
+          skipColor: body.skipColor,
+          skipEndDate: body.skipEndDate,
+        }
+
+        const workout = await payload.create({
+          collection: 'workouts',
+          data: workoutData,
+        })
+        workouts.push(workout)
+      }
+      return NextResponse.json(workouts, { status: 201 })
+    }
+
+    // Подготавливаем данные в зависимости от типа записи
+    const workoutData: any = {
+      name: body.name,
+      date: body.date,
+      notes: body.notes,
+    }
+
+    // Если это пропуск тренировки
+    if (body.isSkip) {
+      workoutData.isSkip = true
+      workoutData.skipReason = body.skipReason
+      workoutData.customReason = body.customReason
+      workoutData.skipColor = body.skipColor
+      workoutData.skipEndDate = body.skipEndDate
+    } else {
+      // Если это обычная тренировка
+      workoutData.template = body.template || null
+      workoutData.exercises =
+        body.exercises?.map((exercise: any) => ({
           ...exercise,
           exerciseType: exercise.exerciseType || 'strength',
-        })),
-        notes: body.notes,
-        duration: body.duration ? parseInt(body.duration) : null,
-      },
+        })) || []
+      workoutData.duration = body.duration ? parseInt(body.duration) : null
+    }
+
+    const workout = await payload.create({
+      collection: 'workouts',
+      data: workoutData,
     })
 
     return NextResponse.json(workout, { status: 201 })
