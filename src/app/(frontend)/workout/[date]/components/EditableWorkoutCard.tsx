@@ -19,6 +19,22 @@ export default function EditableWorkoutCard({
   const [editedWorkout, setEditedWorkout] = useState(workout)
   const [isDeleting, setIsDeleting] = useState(false)
 
+  // Функция для расчета тоннажа упражнения
+  const calculateExerciseTonnage = (exercise: any) => {
+    if (exercise.exerciseType !== 'strength') return 0
+
+    let totalTonnage = 0
+    exercise.sets?.forEach((set: any) => {
+      if (set.reps && set.weight) {
+        const reps = parseInt(set.reps) || 0
+        const weight = parseFloat(set.weight) || 0
+        totalTonnage += reps * weight
+      }
+    })
+
+    return Math.round(totalTonnage * 100) / 100
+  }
+
   const handleDragEnd = (result: any) => {
     if (!result.destination) return
 
@@ -374,30 +390,38 @@ export default function EditableWorkoutCard({
         </div>
       ) : (
         <div className="exercises">
-          {(editedWorkout.exercises || []).map((exercise, exerciseIndex) => (
-            <div key={exerciseIndex} className="exercise">
-              <h3>{exercise.name}</h3>
-              <div className="sets">
-                {(exercise.sets || []).map((set, setIndex) => (
-                  <div key={setIndex} className="set">
-                    <span className="set-number">Подход {setIndex + 1}:</span>
-                    {exercise.exerciseType === 'strength' ? (
-                      <>
-                        {set.reps && <span>Повторения: {set.reps}</span>}
-                        {set.weight && <span>Вес: {set.weight} кг</span>}
-                      </>
-                    ) : (
-                      <>
-                        {set.duration && <span>Время: {set.duration}</span>}
-                        {set.distance && <span>Дистанция: {set.distance} км</span>}
-                      </>
-                    )}
-                    {set.notes && <span className="notes">Заметки: {set.notes}</span>}
-                  </div>
-                ))}
+          {(editedWorkout.exercises || []).map((exercise, exerciseIndex) => {
+            const tonnage = calculateExerciseTonnage(exercise)
+            return (
+              <div key={exerciseIndex} className="exercise">
+                <h3>
+                  {exercise.name}
+                  {tonnage > 0 && (
+                    <span className="exercise-tonnage"> - {tonnage.toLocaleString()} кг</span>
+                  )}
+                </h3>
+                <div className="sets">
+                  {(exercise.sets || []).map((set, setIndex) => (
+                    <div key={setIndex} className="set">
+                      <span className="set-number">Подход {setIndex + 1}:</span>
+                      {exercise.exerciseType === 'strength' ? (
+                        <>
+                          {set.reps && <span>Повторения: {set.reps}</span>}
+                          {set.weight && <span>Вес: {set.weight} кг</span>}
+                        </>
+                      ) : (
+                        <>
+                          {set.duration && <span>Время: {set.duration}</span>}
+                          {set.distance && <span>Дистанция: {set.distance} км</span>}
+                        </>
+                      )}
+                      {set.notes && <span className="notes">Заметки: {set.notes}</span>}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 

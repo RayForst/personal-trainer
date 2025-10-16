@@ -783,6 +783,12 @@ body {
   font-weight: 600;
 }
 
+.exercise-tonnage {
+  color: #6c757d;
+  font-weight: normal;
+  font-size: 0.9em;
+}
+
 .sets {
   display: flex;
   flex-direction: column;
