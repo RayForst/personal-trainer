@@ -176,6 +176,11 @@ export default function AddWorkoutForm({ templates }: AddWorkoutFormProps) {
         body: JSON.stringify(formData),
       })
 
+      if (response.status === 401) {
+        window.location.href = '/login'
+        return
+      }
+
       if (response.ok) {
         // Сброс формы
         setFormData({
@@ -233,6 +238,11 @@ export default function AddWorkoutForm({ templates }: AddWorkoutFormProps) {
           notes: skipData.notes,
         }),
       })
+
+      if (response.status === 401) {
+        window.location.href = '/login'
+        return
+      }
 
       if (response.ok) {
         // Сброс формы пропуска

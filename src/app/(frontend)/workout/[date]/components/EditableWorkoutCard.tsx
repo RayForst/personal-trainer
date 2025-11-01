@@ -55,10 +55,20 @@ export default function EditableWorkoutCard({
     if (window.confirm('Вы уверены, что хотите удалить эту тренировку?')) {
       setIsDeleting(true)
       try {
-        await fetch(`/api/workouts/${workout.id}`, {
+        const response = await fetch(`/api/workouts/${workout.id}`, {
           method: 'DELETE',
         })
-        onDelete(workout.id)
+
+        if (response.status === 401) {
+          window.location.href = '/login'
+          return
+        }
+
+        if (response.ok) {
+          onDelete(workout.id)
+        } else {
+          alert('Ошибка при удалении тренировки')
+        }
       } catch (error) {
         console.error('Error deleting workout:', error)
         alert('Ошибка при удалении тренировки')
@@ -77,6 +87,11 @@ export default function EditableWorkoutCard({
         },
         body: JSON.stringify(editedWorkout),
       })
+
+      if (response.status === 401) {
+        window.location.href = '/login'
+        return
+      }
 
       if (response.ok) {
         setIsEditing(false)

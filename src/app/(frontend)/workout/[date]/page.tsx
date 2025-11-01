@@ -1,9 +1,11 @@
 import { headers as getHeaders } from 'next/headers.js'
 import { getPayload } from 'payload'
+import { redirect } from 'next/navigation'
 import React from 'react'
 import Link from 'next/link'
 
 import config from '@/payload.config'
+import { isAuthenticated } from '@/lib/auth'
 import type { Workout } from '@/payload-types'
 import WorkoutList from './components/WorkoutList'
 
@@ -14,6 +16,12 @@ interface PageProps {
 }
 
 export default async function WorkoutDayPage({ params }: PageProps) {
+  // Проверяем авторизацию
+  const authenticated = await isAuthenticated()
+  if (!authenticated) {
+    redirect('/login')
+  }
+
   const headers = await getHeaders()
   const payloadConfig = await config
   const payload = await getPayload({ config: payloadConfig })

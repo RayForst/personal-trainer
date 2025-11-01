@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import WorkoutGrid from './WorkoutGrid'
 import AddWorkoutForm from './AddWorkoutForm'
 import WorkoutList from '../workout/[date]/components/WorkoutList'
@@ -13,12 +14,28 @@ interface HomePageProps {
 }
 
 export default function HomePage({ initialWorkouts, recentWorkouts }: HomePageProps) {
+  const router = useRouter()
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedDateWorkouts, setSelectedDateWorkouts] = useState<Workout[]>([])
   const [allWorkouts, setAllWorkouts] = useState<Workout[]>(initialWorkouts)
+  const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(false)
+  const [isRightPanelOpen, setIsRightPanelOpen] = useState(false)
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+      router.push('/login')
+      router.refresh()
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Все равно перенаправляем на страницу логина
+      router.push('/login')
+    }
+  }
 
   const handleDaySelect = async (date: string) => {
     setSelectedDate(date)
+    setIsLeftPanelOpen(true)
 
     // Фильтруем тренировки за выбранную дату
     const workoutsForDate = allWorkouts.filter((workout) => {
@@ -27,6 +44,20 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
     })
 
     setSelectedDateWorkouts(workoutsForDate)
+  }
+
+  const handleAddWorkoutClick = () => {
+    setIsRightPanelOpen(true)
+  }
+
+  const handleCloseLeftPanel = () => {
+    setIsLeftPanelOpen(false)
+    setSelectedDate(null)
+    setSelectedDateWorkouts([])
+  }
+
+  const handleCloseRightPanel = () => {
+    setIsRightPanelOpen(false)
   }
 
   const handleWorkoutUpdate = (updatedWorkout: Workout) => {
@@ -80,52 +111,86 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
   }
 
   return (
-    <div className="main-grid">
-      {/* Сетка активности */}
-      <section className="activity-section">
-        <h2>
-          История тренировок<sup>Последний год активности</sup>
-        </h2>
-        <WorkoutGrid workouts={allWorkouts} onDaySelect={handleDaySelect} />
-      </section>
-
-      {/* Статистика дня */}
-      <WorkoutStats workouts={selectedDateWorkouts} selectedDate={selectedDate} />
-
-      {/* Заглушка или тренировки за день */}
-      <section className="modal-placeholder">
-        {selectedDate ? (
-          <div className="workout-day-content">
-            <div className="workout-day-header">
-              <h3>
-                Тренировки за день <span className="date-info">({formatDate(selectedDate)})</span>
-              </h3>
-              <button onClick={() => setSelectedDate(null)} className="close-btn">
-                ×
-              </button>
-            </div>
-            <WorkoutList
-              initialWorkouts={selectedDateWorkouts}
-              onWorkoutUpdate={handleWorkoutUpdate}
-              onWorkoutDelete={handleWorkoutDelete}
-            />
-          </div>
-        ) : (
-          <div className="placeholder-content">
-            <h3>Выберите день в истории тренировок</h3>
-            <p>
-              Кликните на любой квадратик в сетке активности, чтобы просмотреть тренировки за этот
-              день
-            </p>
+    <div
+      className={`triptych-container ${isLeftPanelOpen ? 'left-open' : ''} ${isRightPanelOpen ? 'right-open' : ''}`}
+    >
+      {/* Левая выдвижная панель - Тренировки за день */}
+      <aside className={`left-panel ${isLeftPanelOpen ? 'open' : ''}`}>
+        {!isLeftPanelOpen && (
+          <div className="panel-tab" onClick={() => setIsLeftPanelOpen(true)} title="Открыть тренировки">
+            <span>Тренировки</span>
           </div>
         )}
-      </section>
+        <div className="panel-content">
+          <div className="panel-header">
+            <h2>
+              Тренировки за день{' '}
+              {selectedDate && <span className="date-info">({formatDate(selectedDate)})</span>}
+            </h2>
+            <button onClick={handleCloseLeftPanel} className="close-btn">
+              ×
+            </button>
+          </div>
+          {selectedDate && selectedDateWorkouts.length > 0 ? (
+            <div className="panel-body">
+              <WorkoutList
+                initialWorkouts={selectedDateWorkouts}
+                onWorkoutUpdate={handleWorkoutUpdate}
+                onWorkoutDelete={handleWorkoutDelete}
+              />
+            </div>
+          ) : selectedDate ? (
+            <div className="panel-body placeholder-content">
+              <p>В этот день тренировок не было</p>
+            </div>
+          ) : null}
+        </div>
+      </aside>
 
-      {/* Форма добавления тренировки */}
-      <section className="add-workout-section">
-        <h2>Добавить тренировку</h2>
-        <AddWorkoutForm templates={recentWorkouts} />
-      </section>
+      {/* Центральная часть - История и статистика */}
+      <main className="center-content">
+        {/* Сетка активности */}
+        <section className="activity-section">
+          <div className="activity-header">
+            <h2>
+              История тренировок<sup>Последний год активности</sup>
+            </h2>
+            <div className="header-buttons">
+              <button onClick={handleAddWorkoutClick} className="add-workout-btn">
+                ДОБАВИТЬ
+              </button>
+              <button onClick={handleLogout} className="logout-btn" title="Выйти">
+                Выход
+              </button>
+            </div>
+          </div>
+          <WorkoutGrid workouts={allWorkouts} onDaySelect={handleDaySelect} />
+        </section>
+
+        {/* Статистика дня */}
+        <WorkoutStats workouts={selectedDateWorkouts} selectedDate={selectedDate} />
+      </main>
+
+      {/* Правая выдвижная панель - Добавить тренировку */}
+      <aside className={`right-panel ${isRightPanelOpen ? 'open' : ''}`}>
+        {!isRightPanelOpen && (
+          <div className="panel-tab" onClick={() => setIsRightPanelOpen(true)} title="Открыть форму добавления">
+            <span>Добавить</span>
+          </div>
+        )}
+        <div className="panel-content">
+          <div className="panel-header">
+            <h2>Добавить тренировку</h2>
+            <button onClick={handleCloseRightPanel} className="close-btn">
+              ×
+            </button>
+          </div>
+          <div className="panel-body">
+            <AddWorkoutForm templates={recentWorkouts} />
+          </div>
+        </div>
+      </aside>
+
     </div>
   )
 }

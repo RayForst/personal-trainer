@@ -1,8 +1,25 @@
 import { getPayload } from 'payload'
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import config from '@/payload.config'
 
+async function checkAuth(): Promise<boolean> {
+  try {
+    const cookieStore = await cookies()
+    const authToken = cookieStore.get('auth_token')
+    return authToken?.value === 'authenticated'
+  } catch {
+    return false
+  }
+}
+
 export async function POST(request: NextRequest) {
+  // Проверяем авторизацию
+  const authenticated = await checkAuth()
+  if (!authenticated) {
+    return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
+  }
+
   try {
     const payload = await getPayload({ config })
     const body = await request.json()
@@ -69,6 +86,12 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  // Проверяем авторизацию
+  const authenticated = await checkAuth()
+  if (!authenticated) {
+    return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
+  }
+
   try {
     const payload = await getPayload({ config })
     const { searchParams } = new URL(request.url)
