@@ -35,6 +35,50 @@ export default function EditableWorkoutCard({
     return Math.round(totalTonnage * 100) / 100
   }
 
+  // Функция для форматирования времени в hh:mm:ss
+  const formatDuration = (duration: string | null | undefined): string => {
+    if (!duration) return ''
+
+    const durationStr = duration.trim()
+    let totalSeconds = 0
+
+    if (durationStr.includes(':')) {
+      // Формат "мм:сс" или "чч:мм:сс"
+      const parts = durationStr.split(':').map(Number)
+      if (parts.length === 2) {
+        // мм:сс
+        totalSeconds = parts[0] * 60 + (parts[1] || 0)
+      } else if (parts.length === 3) {
+        // чч:мм:сс
+        totalSeconds = parts[0] * 3600 + parts[1] * 60 + (parts[2] || 0)
+      }
+    } else {
+      // Просто число - определяем формат по значению
+      const num = parseFloat(durationStr)
+      if (!isNaN(num)) {
+        if (num <= 300) {
+          // Секунды
+          totalSeconds = Math.round(num)
+        } else {
+          // Минуты -> секунды
+          totalSeconds = Math.round(num * 60)
+        }
+      }
+    }
+
+    if (totalSeconds === 0) return ''
+
+    const hours = Math.floor(totalSeconds / 3600)
+    const minutes = Math.floor((totalSeconds % 3600) / 60)
+    const seconds = totalSeconds % 60
+
+    if (hours > 0) {
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+    } else {
+      return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+    }
+  }
+
   const handleDragEnd = (result: any) => {
     if (!result.destination) return
 
@@ -191,20 +235,29 @@ export default function EditableWorkoutCard({
           {workout.duration && <span className="duration">⏱️ {workout.duration} мин</span>}
           {!isEditing ? (
             <div className="action-buttons">
-              <button onClick={() => setIsEditing(true)} className="edit-btn">
-                ✏️ Редактировать
+              <button
+                onClick={() => setIsEditing(true)}
+                className="edit-btn icon-only"
+                title="Редактировать"
+              >
+                ✏️
               </button>
-              <button onClick={handleDelete} disabled={isDeleting} className="delete-btn">
-                {isDeleting ? 'Удаление...' : '🗑️ Удалить'}
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="delete-btn icon-only"
+                title={isDeleting ? 'Удаление...' : 'Удалить'}
+              >
+                {isDeleting ? '⏳' : '🗑️'}
               </button>
             </div>
           ) : (
             <div className="action-buttons">
-              <button onClick={handleSave} className="save-btn">
-                💾 Сохранить
+              <button onClick={handleSave} className="save-btn icon-only" title="Сохранить">
+                💾
               </button>
-              <button onClick={handleCancel} className="cancel-btn">
-                ❌ Отмена
+              <button onClick={handleCancel} className="cancel-btn icon-only" title="Отмена">
+                ❌
               </button>
             </div>
           )}
@@ -415,24 +468,41 @@ export default function EditableWorkoutCard({
                     <span className="exercise-tonnage"> - {tonnage.toLocaleString()} кг</span>
                   )}
                 </h3>
-                <div className="sets">
-                  {(exercise.sets || []).map((set, setIndex) => (
-                    <div key={setIndex} className="set">
-                      <span className="set-number">Подход {setIndex + 1}:</span>
-                      {exercise.exerciseType === 'strength' ? (
-                        <>
-                          {set.reps && <span>Повторения: {set.reps}</span>}
-                          {set.weight && <span>Вес: {set.weight} кг</span>}
-                        </>
-                      ) : (
-                        <>
-                          {set.duration && <span>Время: {set.duration}</span>}
-                          {set.distance && <span>Дистанция: {set.distance} км</span>}
-                        </>
-                      )}
-                      {set.notes && <span className="notes">Заметки: {set.notes}</span>}
-                    </div>
-                  ))}
+                <div className="sets-compact">
+                  {(exercise.sets || []).map((set, setIndex) => {
+                    let setText = ''
+
+                    if (exercise.exerciseType === 'strength') {
+                      const parts: string[] = []
+                      if (set.reps && set.weight) {
+                        parts.push(`${set.reps}×${set.weight} кг`)
+                      } else if (set.reps) {
+                        parts.push(`${set.reps} повт.`)
+                      } else if (set.weight) {
+                        parts.push(`${set.weight} кг`)
+                      }
+                      setText = parts.join(' ')
+                    } else {
+                      const parts: string[] = []
+                      const formattedDuration = formatDuration(set.duration)
+                      if (formattedDuration) parts.push(formattedDuration)
+                      if (set.distance) parts.push(`${set.distance} км`)
+                      setText = parts.join(' ')
+                    }
+
+                    if (set.notes) {
+                      setText += ` (${set.notes})`
+                    }
+
+                    return setText ? (
+                      <span key={setIndex} className="set-inline">
+                        {setText}
+                        {setIndex < (exercise.sets?.length || 0) - 1 && (
+                          <span className="set-separator"> | </span>
+                        )}
+                      </span>
+                    ) : null
+                  })}
                 </div>
               </div>
             )

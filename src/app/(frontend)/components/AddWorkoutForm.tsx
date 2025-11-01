@@ -8,7 +8,7 @@ interface AddWorkoutFormProps {
   templates: Workout[]
 }
 
-type TabType = 'workout' | 'skip'
+type TabType = 'workout' | 'skip' | 'goal'
 
 export default function AddWorkoutForm({ templates }: AddWorkoutFormProps) {
   const [activeTab, setActiveTab] = useState<TabType>('workout')
@@ -41,6 +41,16 @@ export default function AddWorkoutForm({ templates }: AddWorkoutFormProps) {
     customReason: '',
     color: 'blue' as 'blue' | 'red' | 'orange' | 'yellow',
     notes: '',
+  })
+
+  // Состояние для формы цели
+  const [goalData, setGoalData] = useState({
+    name: '',
+    date: new Date().toISOString().split('T')[0],
+    value: '',
+    unit: '',
+    notes: '',
+    image: null as File | null,
   })
 
   const handleTemplateChange = (templateId: string) => {
@@ -267,6 +277,56 @@ export default function AddWorkoutForm({ templates }: AddWorkoutFormProps) {
     }
   }
 
+  const handleGoalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+
+    try {
+      // Создаём FormData для отправки файла
+      const formData = new FormData()
+      formData.append('name', goalData.name)
+      formData.append('date', goalData.date)
+      formData.append('value', goalData.value)
+      formData.append('unit', goalData.unit)
+      formData.append('notes', goalData.notes)
+
+      if (goalData.image) {
+        formData.append('image', goalData.image)
+      }
+
+      const response = await fetch('/api/goals', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (response.status === 401) {
+        window.location.href = '/login'
+        return
+      }
+
+      if (response.ok) {
+        // Сброс формы цели
+        setGoalData({
+          name: '',
+          date: new Date().toISOString().split('T')[0],
+          value: '',
+          unit: '',
+          notes: '',
+          image: null,
+        })
+        alert('Цель успешно добавлена!')
+        window.location.reload()
+      } else {
+        alert('Ошибка при добавлении цели')
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Ошибка при добавлении цели')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <div className="add-workout-form-container">
       {/* Табы */}
@@ -284,6 +344,13 @@ export default function AddWorkoutForm({ templates }: AddWorkoutFormProps) {
           onClick={() => setActiveTab('skip')}
         >
           Пропуск
+        </button>
+        <button
+          type="button"
+          className={`tab-button ${activeTab === 'goal' ? 'active' : ''}`}
+          onClick={() => setActiveTab('goal')}
+        >
+          Цель
         </button>
       </div>
 
@@ -535,7 +602,7 @@ export default function AddWorkoutForm({ templates }: AddWorkoutFormProps) {
             {isSubmitting ? 'Добавление...' : 'Добавить тренировку'}
           </button>
         </form>
-      ) : (
+      ) : activeTab === 'skip' ? (
         <form onSubmit={handleSkipSubmit} className="add-workout-form">
           <div className="form-group">
             <label htmlFor="skip-date">Дата начала пропуска:</label>
@@ -668,7 +735,95 @@ export default function AddWorkoutForm({ templates }: AddWorkoutFormProps) {
             {isSubmitting ? 'Отметка пропуска...' : 'Отметить пропуск'}
           </button>
         </form>
-      )}
+      ) : activeTab === 'goal' ? (
+        <form onSubmit={handleGoalSubmit} className="add-workout-form">
+          <div className="form-group">
+            <label htmlFor="goal-name">Название цели:</label>
+            <input
+              type="text"
+              id="goal-name"
+              placeholder="Например: Бросить курить, Научиться прыгать на скакалке"
+              value={goalData.name}
+              onChange={(e) => setGoalData((prev) => ({ ...prev, name: e.target.value }))}
+              required
+            />
+            <small className="form-help">Название цели, которую вы хотите отслеживать</small>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="goal-date">Дата:</label>
+            <input
+              type="date"
+              id="goal-date"
+              value={goalData.date}
+              onChange={(e) => setGoalData((prev) => ({ ...prev, date: e.target.value }))}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="goal-value">Значение:</label>
+            <input
+              type="number"
+              id="goal-value"
+              step="0.01"
+              placeholder="Например: 5 (количество сигарет), 120 (секунды прыжков)"
+              value={goalData.value}
+              onChange={(e) => setGoalData((prev) => ({ ...prev, value: e.target.value }))}
+              required
+            />
+            <small className="form-help">Количество, которое вы хотите отследить в этот день</small>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="goal-unit">Единица измерения (опционально):</label>
+            <input
+              type="text"
+              id="goal-unit"
+              placeholder="Например: сигарет, секунд, раз"
+              value={goalData.unit}
+              onChange={(e) => setGoalData((prev) => ({ ...prev, unit: e.target.value }))}
+            />
+            <small className="form-help">Единица измерения для лучшего понимания значения</small>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="goal-notes">Заметки:</label>
+            <textarea
+              id="goal-notes"
+              value={goalData.notes}
+              onChange={(e) => setGoalData((prev) => ({ ...prev, notes: e.target.value }))}
+              rows={3}
+              placeholder="Дополнительные заметки о цели..."
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="goal-image">Изображение для фона (опционально):</label>
+            <input
+              type="file"
+              id="goal-image"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0] || null
+                setGoalData((prev) => ({ ...prev, image: file }))
+              }}
+            />
+            <small className="form-help">
+              Изображение будет использоваться как фон карточки цели в статистике
+            </small>
+            {goalData.image && (
+              <div style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: '#6c757d' }}>
+                Выбрано: {goalData.image.name}
+              </div>
+            )}
+          </div>
+
+          <button type="submit" disabled={isSubmitting} className="submit-btn">
+            {isSubmitting ? 'Добавление цели...' : 'Добавить цель'}
+          </button>
+        </form>
+      ) : null}
     </div>
   )
 }

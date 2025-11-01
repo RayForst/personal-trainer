@@ -6,6 +6,7 @@ import WorkoutGrid from './WorkoutGrid'
 import AddWorkoutForm from './AddWorkoutForm'
 import WorkoutList from '../workout/[date]/components/WorkoutList'
 import WorkoutStats from './WorkoutStats'
+import GoalsList from './GoalsList'
 import type { Workout } from '@/payload-types'
 
 interface HomePageProps {
@@ -115,13 +116,24 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
       className={`triptych-container ${isLeftPanelOpen ? 'left-open' : ''} ${isRightPanelOpen ? 'right-open' : ''}`}
     >
       {/* Левая выдвижная панель - Тренировки за день */}
-      <aside className={`left-panel ${isLeftPanelOpen ? 'open' : ''}`}>
+      <aside
+        className={`left-panel ${isLeftPanelOpen ? 'open' : ''}`}
+        onClick={!isLeftPanelOpen ? () => setIsLeftPanelOpen(true) : undefined}
+        title={!isLeftPanelOpen ? 'Открыть тренировки' : undefined}
+      >
         {!isLeftPanelOpen && (
-          <div className="panel-tab" onClick={() => setIsLeftPanelOpen(true)} title="Открыть тренировки">
+          <div
+            className="panel-tab"
+            onClick={(e) => {
+              e.stopPropagation()
+              setIsLeftPanelOpen(true)
+            }}
+            title="Открыть тренировки"
+          >
             <span>Тренировки</span>
           </div>
         )}
-        <div className="panel-content">
+        <div className="panel-content" onClick={(e) => isLeftPanelOpen && e.stopPropagation()}>
           <div className="panel-header">
             <h2>
               Тренировки за день{' '}
@@ -169,16 +181,30 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
 
         {/* Статистика дня */}
         <WorkoutStats workouts={selectedDateWorkouts} selectedDate={selectedDate} />
+
+        {/* Цели */}
+        <GoalsList />
       </main>
 
       {/* Правая выдвижная панель - Добавить тренировку */}
-      <aside className={`right-panel ${isRightPanelOpen ? 'open' : ''}`}>
+      <aside
+        className={`right-panel ${isRightPanelOpen ? 'open' : ''}`}
+        onClick={!isRightPanelOpen ? () => setIsRightPanelOpen(true) : undefined}
+        title={!isRightPanelOpen ? 'Открыть форму добавления' : undefined}
+      >
         {!isRightPanelOpen && (
-          <div className="panel-tab" onClick={() => setIsRightPanelOpen(true)} title="Открыть форму добавления">
+          <div
+            className="panel-tab"
+            onClick={(e) => {
+              e.stopPropagation()
+              setIsRightPanelOpen(true)
+            }}
+            title="Открыть форму добавления"
+          >
             <span>Добавить</span>
           </div>
         )}
-        <div className="panel-content">
+        <div className="panel-content" onClick={(e) => isRightPanelOpen && e.stopPropagation()}>
           <div className="panel-header">
             <h2>Добавить тренировку</h2>
             <button onClick={handleCloseRightPanel} className="close-btn">
@@ -190,7 +216,6 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
           </div>
         </div>
       </aside>
-
     </div>
   )
 }

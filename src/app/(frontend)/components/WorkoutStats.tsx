@@ -1,7 +1,7 @@
 'use client'
 
-import React from 'react'
-import type { Workout } from '@/payload-types'
+import React, { useEffect, useState } from 'react'
+import type { Workout, Goal } from '@/payload-types'
 
 interface WorkoutStatsProps {
   workouts: Workout[]
@@ -21,6 +21,29 @@ interface WorkoutStats {
 }
 
 export default function WorkoutStats({ workouts, selectedDate }: WorkoutStatsProps) {
+  const [goals, setGoals] = useState<Goal[]>([])
+
+  // Загружаем цели при изменении выбранной даты
+  useEffect(() => {
+    const fetchGoals = async (date: string) => {
+      try {
+        const response = await fetch(`/api/goals?date=${date}`)
+        if (response.ok) {
+          const data = await response.json()
+          setGoals(data.docs || [])
+        }
+      } catch (error) {
+        console.error('Error fetching goals:', error)
+      }
+    }
+
+    if (selectedDate) {
+      fetchGoals(selectedDate)
+    } else {
+      setGoals([])
+    }
+  }, [selectedDate])
+
   // Функция для форматирования времени из минут в мм:сс
   const formatDuration = (minutes: number): string => {
     if (minutes === 0) return '00:00'
@@ -130,12 +153,16 @@ export default function WorkoutStats({ workouts, selectedDate }: WorkoutStatsPro
 
   const stats = calculateStats(workouts)
 
-  if (!selectedDate || workouts.length === 0) {
+  // Проверяем, есть ли данные для отображения
+  const hasWorkouts = workouts.length > 0
+  const hasGoals = goals.length > 0
+
+  if (!selectedDate || (!hasWorkouts && !hasGoals)) {
     return (
       <section className="stats-section">
         <h2>Статистика дня</h2>
         <div className="stats-placeholder">
-          <p>Выберите день с тренировками для просмотра статистики</p>
+          <p>Выберите день с тренировками или целями для просмотра статистики</p>
         </div>
       </section>
     )
@@ -197,6 +224,57 @@ export default function WorkoutStats({ workouts, selectedDate }: WorkoutStatsPro
           <div className="stat-value">{stats.cardioExercises}</div>
           <div className="stat-label">кардио</div>
         </div>
+
+        {/* Отображение целей */}
+        {goals.map((goal) => {
+          // Получаем URL изображения
+          const imageUrl =
+            goal.image &&
+            typeof goal.image === 'object' &&
+            goal.image !== null &&
+            'url' in goal.image
+              ? goal.image.url
+              : null
+
+          const cardStyle: React.CSSProperties = imageUrl
+            ? {
+                backgroundImage: `url(${imageUrl})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                color: 'white',
+                position: 'relative',
+                border: 'none',
+              }
+            : {}
+
+          return (
+            <div key={goal.id} className="stat-card" style={cardStyle}>
+              {imageUrl && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background:
+                      'linear-gradient(135deg, rgb(102 126 234 / 32%) 0%, rgb(118 75 162 / 24%) 100%)',
+                    borderRadius: '8px',
+                    zIndex: 0,
+                  }}
+                />
+              )}
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <div className="stat-value">
+                  {goal.value.toLocaleString()}
+                  {goal.unit && ` ${goal.unit}`}
+                </div>
+                <div className="stat-label">{goal.name}</div>
+              </div>
+            </div>
+          )
+        })}
       </div>
     </section>
   )

@@ -71,6 +71,7 @@ export interface Config {
     media: Media;
     workouts: Workout;
     'workout-templates': WorkoutTemplate;
+    goals: Goal;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -81,6 +82,7 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     workouts: WorkoutsSelect<false> | WorkoutsSelect<true>;
     'workout-templates': WorkoutTemplatesSelect<false> | WorkoutTemplatesSelect<true>;
+    goals: GoalsSelect<false> | GoalsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -224,6 +226,36 @@ export interface WorkoutTemplate {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "goals".
+ */
+export interface Goal {
+  id: string;
+  /**
+   * Например: Бросить курить, Научиться прыгать на скакалке
+   */
+  name: string;
+  date: string;
+  /**
+   * Количество, которое вы хотите отследить (например, количество сигарет, секунды прыжков)
+   */
+  value: number;
+  /**
+   * Например: сигарет, секунд, раз и т.д.
+   */
+  unit?: string | null;
+  /**
+   * Дополнительные заметки о цели
+   */
+  notes?: string | null;
+  /**
+   * Изображение, которое будет использоваться как фон карточки цели в статистике
+   */
+  image?: (string | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -244,6 +276,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'workout-templates';
         value: string | WorkoutTemplate;
+      } | null)
+    | ({
+        relationTo: 'goals';
+        value: string | Goal;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -382,6 +418,20 @@ export interface WorkoutTemplatesSelect<T extends boolean = true> {
         notes?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "goals_select".
+ */
+export interface GoalsSelect<T extends boolean = true> {
+  name?: T;
+  date?: T;
+  value?: T;
+  unit?: T;
+  notes?: T;
+  image?: T;
   updatedAt?: T;
   createdAt?: T;
 }

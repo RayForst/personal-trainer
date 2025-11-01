@@ -11,6 +11,7 @@ import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import { Workouts } from './collections/Workouts'
 import { WorkoutTemplates } from './collections/WorkoutTemplates'
+import { Goals } from './collections/Goals'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -22,7 +23,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Workouts, WorkoutTemplates],
+  collections: [Users, Media, Workouts, WorkoutTemplates, Goals],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
