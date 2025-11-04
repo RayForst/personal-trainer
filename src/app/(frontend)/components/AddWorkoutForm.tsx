@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import type { Workout } from '@/payload-types'
+import { showToast } from '@/lib/toast'
 
 interface AddWorkoutFormProps {
   templates: Workout[]
@@ -47,7 +48,7 @@ export default function AddWorkoutForm({ templates }: AddWorkoutFormProps) {
   const [goalData, setGoalData] = useState({
     name: '',
     date: new Date().toISOString().split('T')[0],
-    value: '',
+    endDate: '',
     unit: '',
     notes: '',
     image: null as File | null,
@@ -201,14 +202,14 @@ export default function AddWorkoutForm({ templates }: AddWorkoutFormProps) {
           notes: '',
           duration: '',
         })
-        alert('Тренировка успешно добавлена!')
+        showToast.success('Тренировка успешно добавлена!')
         window.location.reload()
       } else {
-        alert('Ошибка при добавлении тренировки')
+        showToast.error('Ошибка при добавлении тренировки')
       }
     } catch (error) {
       console.error('Error:', error)
-      alert('Ошибка при добавлении тренировки')
+      showToast.error('Ошибка при добавлении тренировки')
     } finally {
       setIsSubmitting(false)
     }
@@ -264,14 +265,14 @@ export default function AddWorkoutForm({ templates }: AddWorkoutFormProps) {
           color: 'blue',
           notes: '',
         })
-        alert(`Пропуск тренировки отмечен для ${datesToSkip.length} дня(ей)!`)
+        showToast.success(`Пропуск тренировки отмечен для ${datesToSkip.length} дня(ей)!`)
         window.location.reload()
       } else {
-        alert('Ошибка при отметке пропуска')
+        showToast.error('Ошибка при отметке пропуска')
       }
     } catch (error) {
       console.error('Error:', error)
-      alert('Ошибка при отметке пропуска')
+      showToast.error('Ошибка при отметке пропуска')
     } finally {
       setIsSubmitting(false)
     }
@@ -286,10 +287,10 @@ export default function AddWorkoutForm({ templates }: AddWorkoutFormProps) {
       const formData = new FormData()
       formData.append('name', goalData.name)
       formData.append('date', goalData.date)
-      formData.append('value', goalData.value)
+      formData.append('endDate', goalData.endDate || '')
       formData.append('unit', goalData.unit)
       formData.append('notes', goalData.notes)
-
+      
       if (goalData.image) {
         formData.append('image', goalData.image)
       }
@@ -309,19 +310,19 @@ export default function AddWorkoutForm({ templates }: AddWorkoutFormProps) {
         setGoalData({
           name: '',
           date: new Date().toISOString().split('T')[0],
-          value: '',
+          endDate: '',
           unit: '',
           notes: '',
           image: null,
         })
-        alert('Цель успешно добавлена!')
+        showToast.success('Цель успешно добавлена!')
         window.location.reload()
       } else {
-        alert('Ошибка при добавлении цели')
+        showToast.error('Ошибка при добавлении цели')
       }
     } catch (error) {
       console.error('Error:', error)
-      alert('Ошибка при добавлении цели')
+      showToast.error('Ошибка при добавлении цели')
     } finally {
       setIsSubmitting(false)
     }
@@ -762,17 +763,17 @@ export default function AddWorkoutForm({ templates }: AddWorkoutFormProps) {
           </div>
 
           <div className="form-group">
-            <label htmlFor="goal-value">Значение:</label>
+            <label htmlFor="goal-end-date">Дата завершения (опционально):</label>
             <input
-              type="number"
-              id="goal-value"
-              step="0.01"
-              placeholder="Например: 5 (количество сигарет), 120 (секунды прыжков)"
-              value={goalData.value}
-              onChange={(e) => setGoalData((prev) => ({ ...prev, value: e.target.value }))}
-              required
+              type="date"
+              id="goal-end-date"
+              value={goalData.endDate}
+              onChange={(e) => setGoalData((prev) => ({ ...prev, endDate: e.target.value }))}
+              min={goalData.date}
             />
-            <small className="form-help">Количество, которое вы хотите отследить в этот день</small>
+            <small className="form-help">
+              Дата, когда цель была завершена
+            </small>
           </div>
 
           <div className="form-group">

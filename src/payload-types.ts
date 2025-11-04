@@ -72,6 +72,7 @@ export interface Config {
     workouts: Workout;
     'workout-templates': WorkoutTemplate;
     goals: Goal;
+    'goal-activity-records': GoalActivityRecord;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -83,6 +84,7 @@ export interface Config {
     workouts: WorkoutsSelect<false> | WorkoutsSelect<true>;
     'workout-templates': WorkoutTemplatesSelect<false> | WorkoutTemplatesSelect<true>;
     goals: GoalsSelect<false> | GoalsSelect<true>;
+    'goal-activity-records': GoalActivityRecordsSelect<false> | GoalActivityRecordsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -236,9 +238,9 @@ export interface Goal {
   name: string;
   date: string;
   /**
-   * Количество, которое вы хотите отследить (например, количество сигарет, секунды прыжков)
+   * Дата, когда цель была завершена (опционально)
    */
-  value: number;
+  endDate?: string | null;
   /**
    * Например: сигарет, секунд, раз и т.д.
    */
@@ -251,6 +253,27 @@ export interface Goal {
    * Изображение, которое будет использоваться как фон карточки цели в статистике
    */
   image?: (string | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "goal-activity-records".
+ */
+export interface GoalActivityRecord {
+  id: string;
+  /**
+   * Глобальная цель, к которой относится эта запись активности
+   */
+  goal: string | Goal;
+  /**
+   * Дата, за которую записывается активность
+   */
+  date: string;
+  /**
+   * Значение активности за этот день (например, количество сигарет, секунды прыжков)
+   */
+  value: number;
   updatedAt: string;
   createdAt: string;
 }
@@ -280,6 +303,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'goals';
         value: string | Goal;
+      } | null)
+    | ({
+        relationTo: 'goal-activity-records';
+        value: string | GoalActivityRecord;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -428,10 +455,21 @@ export interface WorkoutTemplatesSelect<T extends boolean = true> {
 export interface GoalsSelect<T extends boolean = true> {
   name?: T;
   date?: T;
-  value?: T;
+  endDate?: T;
   unit?: T;
   notes?: T;
   image?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "goal-activity-records_select".
+ */
+export interface GoalActivityRecordsSelect<T extends boolean = true> {
+  goal?: T;
+  date?: T;
+  value?: T;
   updatedAt?: T;
   createdAt?: T;
 }

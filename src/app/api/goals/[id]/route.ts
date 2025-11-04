@@ -26,7 +26,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     const name = formData.get('name') as string
     const date = formData.get('date') as string
-    const value = formData.get('value') as string
+    const endDate = formData.get('endDate') as string
     const unit = formData.get('unit') as string
     const notes = formData.get('notes') as string
     const imageFile = formData.get('image') as File | null
@@ -35,9 +35,14 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const goalData: any = {
       name,
       date,
-      value: parseFloat(value),
       unit: unit || '',
       notes: notes || '',
+    }
+
+    if (endDate) {
+      goalData.endDate = endDate
+    } else {
+      goalData.endDate = null
     }
 
     // Обработка изображения

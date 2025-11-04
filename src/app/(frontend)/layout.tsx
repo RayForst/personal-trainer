@@ -1,5 +1,6 @@
 import React from 'react'
 import './styles.css'
+import { Toaster } from './components/Toaster'
 
 export const metadata = {
   description: 'Дневник тренировок - отслеживайте свои тренировки и прогресс',
@@ -13,6 +14,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
     <html lang="en">
       <body>
         <main>{children}</main>
+        <Toaster />
       </body>
     </html>
   )

@@ -28,13 +28,15 @@ export const Goals: CollectionConfig = {
       },
     },
     {
-      name: 'value',
-      type: 'number',
-      required: true,
-      label: 'Значение',
+      name: 'endDate',
+      type: 'date',
+      required: false,
+      label: 'Дата завершения',
       admin: {
-        description:
-          'Количество, которое вы хотите отследить (например, количество сигарет, секунды прыжков)',
+        description: 'Дата, когда цель была завершена (опционально)',
+        date: {
+          pickerAppearance: 'dayOnly',
+        },
       },
     },
     {

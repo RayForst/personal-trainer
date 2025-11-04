@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     const name = formData.get('name') as string
     const date = formData.get('date') as string
-    const value = formData.get('value') as string
+    const endDate = formData.get('endDate') as string
     const unit = formData.get('unit') as string
     const notes = formData.get('notes') as string
     const imageFile = formData.get('image') as File | null
@@ -64,13 +64,19 @@ export async function POST(request: NextRequest) {
     const goalData: any = {
       name,
       date,
-      value: parseFloat(value),
       unit: unit || '',
       notes: notes || '',
     }
 
+    if (endDate) {
+      goalData.endDate = endDate
+    }
+
+    // Используем загруженное изображение или переданный ID изображения
     if (imageId) {
       goalData.image = imageId
+    } else if (imageIdFromForm) {
+      goalData.image = imageIdFromForm
     }
 
     const goal = await payload.create({
@@ -103,15 +109,92 @@ export async function GET(request: NextRequest) {
       depth: 2, // Загружаем связанное изображение
     }
 
-    if (date) {
-      query.where = {
-        date: {
-          equals: date,
-        },
-      }
-    }
-
     const goals = await payload.find(query)
+
+    // Если указана дата, фильтруем цели по диапазону дат и загружаем активности
+    if (date) {
+      const filteredGoals = goals.docs.filter((goal) => {
+        const goalDate = new Date(goal.date).toISOString().split('T')[0]
+        
+        // Если дата начала цели больше выбранной даты, не показываем
+        if (goalDate > date) {
+          return false
+        }
+        
+        // Если есть дата завершения, проверяем, что выбранная дата не позже неё
+        if (goal.endDate) {
+          const goalEndDate = new Date(goal.endDate).toISOString().split('T')[0]
+          return date <= goalEndDate
+        }
+        
+        // Если даты завершения нет, показываем цель
+        return true
+      })
+      
+      // Загружаем активности для выбранной даты
+      const activityRecordsResponse = await payload.find({
+        collection: 'goal-activity-records',
+        where: {
+          date: {
+            equals: date,
+          },
+        },
+        depth: 2,
+      })
+
+      // Объединяем цели с их активностями
+      const goalsWithActivities = filteredGoals.map((goal) => {
+        const activityRecord = activityRecordsResponse.docs.find(
+          (record: any) => {
+            const recordGoalId = typeof record.goal === 'object' && record.goal !== null
+              ? record.goal.id
+              : record.goal
+            return recordGoalId === goal.id
+          }
+        )
+
+        // Расширяем цель информацией об активности за этот день
+        return {
+          ...goal,
+          activityValue: activityRecord ? activityRecord.value : null,
+          activityRecordId: activityRecord ? activityRecord.id : null,
+        }
+      })
+
+      // Дедуплицируем цели по названию: для каждого уникального названия показываем только одну цель
+      // Приоритет: 1) цель с активностью за этот день, 2) цель с самой поздней датой начала
+      const goalsByName = new Map<string, any>()
+      
+      goalsWithActivities.forEach((goal) => {
+        const goalName = goal.name.toLowerCase().trim()
+        const existingGoal = goalsByName.get(goalName)
+        
+        if (!existingGoal) {
+          // Если такой цели ещё нет, добавляем
+          goalsByName.set(goalName, goal)
+        } else {
+          // Если цель уже есть, выбираем приоритетную:
+          // 1. Если у текущей цели есть активность, а у существующей нет - заменяем
+          if (goal.activityValue !== null && existingGoal.activityValue === null) {
+            goalsByName.set(goalName, goal)
+          }
+          // 2. Если обе имеют активность или обе не имеют - выбираем с более поздней датой начала
+          else if (
+            (goal.activityValue !== null) === (existingGoal.activityValue !== null)
+          ) {
+            const goalDate = new Date(goal.date).getTime()
+            const existingDate = new Date(existingGoal.date).getTime()
+            if (goalDate > existingDate) {
+              goalsByName.set(goalName, goal)
+            }
+          }
+        }
+      })
+      
+      const uniqueGoals = Array.from(goalsByName.values())
+      
+      return NextResponse.json({ ...goals, docs: uniqueGoals })
+    }
 
     return NextResponse.json(goals)
   } catch (error) {

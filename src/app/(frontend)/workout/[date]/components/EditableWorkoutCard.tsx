@@ -3,6 +3,8 @@
 import React, { useState } from 'react'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import type { Workout } from '@/payload-types'
+import { showToast } from '@/lib/toast'
+import { confirmAction } from '@/app/(frontend)/components/ConfirmDialog'
 
 interface EditableWorkoutCardProps {
   workout: Workout
@@ -96,29 +98,31 @@ export default function EditableWorkoutCard({
   }
 
   const handleDelete = async () => {
-    if (window.confirm('Вы уверены, что хотите удалить эту тренировку?')) {
-      setIsDeleting(true)
-      try {
-        const response = await fetch(`/api/workouts/${workout.id}`, {
-          method: 'DELETE',
-        })
+    const confirmed = await confirmAction('Вы уверены, что хотите удалить эту тренировку?')
+    if (!confirmed) return
 
-        if (response.status === 401) {
-          window.location.href = '/login'
-          return
-        }
+    setIsDeleting(true)
+    try {
+      const response = await fetch(`/api/workouts/${workout.id}`, {
+        method: 'DELETE',
+      })
 
-        if (response.ok) {
-          onDelete(workout.id)
-        } else {
-          alert('Ошибка при удалении тренировки')
-        }
-      } catch (error) {
-        console.error('Error deleting workout:', error)
-        alert('Ошибка при удалении тренировки')
-      } finally {
-        setIsDeleting(false)
+      if (response.status === 401) {
+        window.location.href = '/login'
+        return
       }
+
+      if (response.ok) {
+        showToast.success('Тренировка успешно удалена')
+        onDelete(workout.id)
+      } else {
+        showToast.error('Ошибка при удалении тренировки')
+      }
+    } catch (error) {
+      console.error('Error deleting workout:', error)
+      showToast.error('Ошибка при удалении тренировки')
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -139,13 +143,13 @@ export default function EditableWorkoutCard({
 
       if (response.ok) {
         setIsEditing(false)
-        alert('Тренировка обновлена!')
+        showToast.success('Тренировка обновлена!')
       } else {
-        alert('Ошибка при обновлении тренировки')
+        showToast.error('Ошибка при обновлении тренировки')
       }
     } catch (error) {
       console.error('Error updating workout:', error)
-      alert('Ошибка при обновлении тренировки')
+      showToast.error('Ошибка при обновлении тренировки')
     }
   }
 
@@ -191,7 +195,11 @@ export default function EditableWorkoutCard({
 
   const addSet = (exerciseIndex: number) => {
     const newExercises = [...(editedWorkout.exercises || [])]
-    newExercises[exerciseIndex].sets.push({
+    const exercise = newExercises[exerciseIndex]
+    if (!exercise.sets) {
+      exercise.sets = []
+    }
+    exercise.sets.push({
       reps: '',
       weight: '',
       duration: '',
@@ -206,9 +214,10 @@ export default function EditableWorkoutCard({
 
   const removeSet = (exerciseIndex: number, setIndex: number) => {
     const newExercises = [...(editedWorkout.exercises || [])]
-    newExercises[exerciseIndex].sets = newExercises[exerciseIndex].sets.filter(
-      (_, index) => index !== setIndex,
-    )
+    const exercise = newExercises[exerciseIndex]
+    if (exercise.sets) {
+      exercise.sets = exercise.sets.filter((_, index) => index !== setIndex)
+    }
     setEditedWorkout({
       ...editedWorkout,
       exercises: newExercises,
@@ -217,9 +226,12 @@ export default function EditableWorkoutCard({
 
   const updateSet = (exerciseIndex: number, setIndex: number, field: string, value: string) => {
     const newExercises = [...(editedWorkout.exercises || [])]
-    newExercises[exerciseIndex].sets[setIndex] = {
-      ...newExercises[exerciseIndex].sets[setIndex],
-      [field]: value,
+    const exercise = newExercises[exerciseIndex]
+    if (exercise.sets && exercise.sets[setIndex]) {
+      exercise.sets[setIndex] = {
+        ...exercise.sets[setIndex],
+        [field]: value,
+      }
     }
     setEditedWorkout({
       ...editedWorkout,
@@ -288,173 +300,350 @@ export default function EditableWorkoutCard({
                 className="workout-date-input"
               />
             </div>
+            {editedWorkout.isSkip && (
+              <>
+                <div className="form-group">
+                  <label htmlFor="skip-end-date">Дата окончания пропуска (опционально):</label>
+                  <input
+                    id="skip-end-date"
+                    type="date"
+                    value={
+                      editedWorkout.skipEndDate
+                        ? new Date(editedWorkout.skipEndDate).toISOString().split('T')[0]
+                        : ''
+                    }
+                    onChange={(e) =>
+                      setEditedWorkout({
+                        ...editedWorkout,
+                        skipEndDate: e.target.value || null,
+                      })
+                    }
+                    min={new Date(editedWorkout.date).toISOString().split('T')[0]}
+                    className="workout-date-input"
+                  />
+                  <small className="form-help">Оставьте пустым для пропуска одного дня</small>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="skip-reason">Причина пропуска:</label>
+                  <select
+                    id="skip-reason"
+                    value={editedWorkout.skipReason || ''}
+                    onChange={(e) =>
+                      setEditedWorkout({
+                        ...editedWorkout,
+                        skipReason:
+                          (e.target.value as
+                            | 'injury'
+                            | 'illness'
+                            | 'gym-closed'
+                            | 'natural-disaster'
+                            | 'work'
+                            | 'travel'
+                            | 'family'
+                            | 'lazy'
+                            | 'other'
+                            | null) || null,
+                      })
+                    }
+                  >
+                    <option value="">Выберите причину</option>
+                    <option value="injury">Травма</option>
+                    <option value="illness">Болезнь</option>
+                    <option value="gym-closed">Закрытый зал</option>
+                    <option value="natural-disaster">Стихийное бедствие</option>
+                    <option value="work">Работа</option>
+                    <option value="travel">Поездка</option>
+                    <option value="family">Семейные дела</option>
+                    <option value="lazy">Лень</option>
+                    <option value="other">Другое</option>
+                  </select>
+                </div>
+                {editedWorkout.skipReason === 'other' && (
+                  <div className="form-group">
+                    <label htmlFor="custom-reason">Укажите причину:</label>
+                    <input
+                      type="text"
+                      id="custom-reason"
+                      placeholder="Введите причину пропуска"
+                      value={editedWorkout.customReason || ''}
+                      onChange={(e) =>
+                        setEditedWorkout({ ...editedWorkout, customReason: e.target.value || null })
+                      }
+                    />
+                  </div>
+                )}
+                <div className="form-group">
+                  <label>Цвет для отображения:</label>
+                  <div className="color-options">
+                    <label className="color-option">
+                      <input
+                        type="radio"
+                        name={`skip-color-${workout.id}`}
+                        value="blue"
+                        checked={editedWorkout.skipColor === 'blue'}
+                        onChange={(e) =>
+                          setEditedWorkout({
+                            ...editedWorkout,
+                            skipColor: e.target.value as any,
+                          })
+                        }
+                      />
+                      <span className="color-preview blue"></span>
+                      <span>Синий</span>
+                    </label>
+                    <label className="color-option">
+                      <input
+                        type="radio"
+                        name={`skip-color-${workout.id}`}
+                        value="red"
+                        checked={editedWorkout.skipColor === 'red'}
+                        onChange={(e) =>
+                          setEditedWorkout({
+                            ...editedWorkout,
+                            skipColor: e.target.value as any,
+                          })
+                        }
+                      />
+                      <span className="color-preview red"></span>
+                      <span>Красный</span>
+                    </label>
+                    <label className="color-option">
+                      <input
+                        type="radio"
+                        name={`skip-color-${workout.id}`}
+                        value="orange"
+                        checked={editedWorkout.skipColor === 'orange'}
+                        onChange={(e) =>
+                          setEditedWorkout({
+                            ...editedWorkout,
+                            skipColor: e.target.value as any,
+                          })
+                        }
+                      />
+                      <span className="color-preview orange"></span>
+                      <span>Оранжевый</span>
+                    </label>
+                    <label className="color-option">
+                      <input
+                        type="radio"
+                        name={`skip-color-${workout.id}`}
+                        value="yellow"
+                        checked={editedWorkout.skipColor === 'yellow'}
+                        onChange={(e) =>
+                          setEditedWorkout({
+                            ...editedWorkout,
+                            skipColor: e.target.value as any,
+                          })
+                        }
+                      />
+                      <span className="color-preview yellow"></span>
+                      <span>Желтый</span>
+                    </label>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="skip-notes">Заметки:</label>
+                  <textarea
+                    id="skip-notes"
+                    value={editedWorkout.notes || ''}
+                    onChange={(e) =>
+                      setEditedWorkout({ ...editedWorkout, notes: e.target.value || null })
+                    }
+                    rows={3}
+                    placeholder="Дополнительные заметки о пропуске..."
+                  />
+                </div>
+              </>
+            )}
           </div>
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable droppableId="exercises">
-              {(provided) => (
-                <div
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                  className="exercises-list"
-                >
-                  {(editedWorkout.exercises || []).map((exercise, exerciseIndex) => (
-                    <Draggable
-                      key={exerciseIndex}
-                      draggableId={`exercise-${exerciseIndex}`}
-                      index={exerciseIndex}
+          {!editedWorkout.isSkip && (
+            <>
+              <DragDropContext onDragEnd={handleDragEnd}>
+                <Droppable droppableId="exercises">
+                  {(provided) => (
+                    <div
+                      {...provided.droppableProps}
+                      ref={provided.innerRef}
+                      className="exercises-list"
                     >
-                      {(provided, snapshot) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className={`exercise ${snapshot.isDragging ? 'dragging' : ''}`}
+                      {(editedWorkout.exercises || []).map((exercise, exerciseIndex) => (
+                        <Draggable
+                          key={exerciseIndex}
+                          draggableId={`exercise-${exerciseIndex}`}
+                          index={exerciseIndex}
                         >
-                          <div className="exercise-header">
-                            <span className="drag-handle">⋮⋮</span>
-                            <input
-                              type="text"
-                              value={exercise.name}
-                              onChange={(e) =>
-                                updateExercise(exerciseIndex, 'name', e.target.value)
-                              }
-                              placeholder="Название упражнения"
-                              className="exercise-name-input"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => removeExercise(exerciseIndex)}
-                              className="remove-exercise-btn"
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              className={`exercise ${snapshot.isDragging ? 'dragging' : ''}`}
                             >
-                              ×
-                            </button>
-                          </div>
-
-                          <div className="exercise-type">
-                            <label>Тип упражнения:</label>
-                            <div className="radio-group">
-                              <label className="radio-label">
-                                <input
-                                  type="radio"
-                                  name={`exerciseType-${exerciseIndex}`}
-                                  value="strength"
-                                  checked={exercise.exerciseType === 'strength'}
-                                  onChange={(e) =>
-                                    updateExercise(exerciseIndex, 'exerciseType', e.target.value)
-                                  }
-                                />
-                                <span>Силовое</span>
-                              </label>
-                              <label className="radio-label">
-                                <input
-                                  type="radio"
-                                  name={`exerciseType-${exerciseIndex}`}
-                                  value="cardio"
-                                  checked={exercise.exerciseType === 'cardio'}
-                                  onChange={(e) =>
-                                    updateExercise(exerciseIndex, 'exerciseType', e.target.value)
-                                  }
-                                />
-                                <span>Кардио</span>
-                              </label>
-                            </div>
-                          </div>
-
-                          <div className="sets">
-                            {(exercise.sets || []).map((set, setIndex) => (
-                              <div key={setIndex} className="set-row">
-                                <span className="set-number">Подход {setIndex + 1}:</span>
-
-                                {exercise.exerciseType === 'strength' ? (
-                                  <>
-                                    <input
-                                      type="text"
-                                      placeholder="Повторения"
-                                      value={set.reps || ''}
-                                      onChange={(e) =>
-                                        updateSet(exerciseIndex, setIndex, 'reps', e.target.value)
-                                      }
-                                    />
-                                    <input
-                                      type="text"
-                                      placeholder="Вес (кг)"
-                                      value={set.weight || ''}
-                                      onChange={(e) =>
-                                        updateSet(exerciseIndex, setIndex, 'weight', e.target.value)
-                                      }
-                                    />
-                                  </>
-                                ) : (
-                                  <>
-                                    <input
-                                      type="text"
-                                      placeholder="Время (мин:сек)"
-                                      value={set.duration || ''}
-                                      onChange={(e) =>
-                                        updateSet(
-                                          exerciseIndex,
-                                          setIndex,
-                                          'duration',
-                                          e.target.value,
-                                        )
-                                      }
-                                    />
-                                    <input
-                                      type="text"
-                                      placeholder="Дистанция (км)"
-                                      value={set.distance || ''}
-                                      onChange={(e) =>
-                                        updateSet(
-                                          exerciseIndex,
-                                          setIndex,
-                                          'distance',
-                                          e.target.value,
-                                        )
-                                      }
-                                    />
-                                  </>
-                                )}
-
+                              <div className="exercise-header">
+                                <span className="drag-handle">⋮⋮</span>
                                 <input
                                   type="text"
-                                  placeholder="Заметки"
-                                  value={set.notes || ''}
+                                  value={exercise.name}
                                   onChange={(e) =>
-                                    updateSet(exerciseIndex, setIndex, 'notes', e.target.value)
+                                    updateExercise(exerciseIndex, 'name', e.target.value)
                                   }
+                                  placeholder="Название упражнения"
+                                  className="exercise-name-input"
                                 />
-
                                 <button
                                   type="button"
-                                  onClick={() => removeSet(exerciseIndex, setIndex)}
-                                  className="remove-set-btn"
+                                  onClick={() => removeExercise(exerciseIndex)}
+                                  className="remove-exercise-btn"
                                 >
                                   ×
                                 </button>
                               </div>
-                            ))}
 
-                            <button
-                              type="button"
-                              onClick={() => addSet(exerciseIndex)}
-                              className="add-set-btn"
-                            >
-                              + Добавить подход
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
+                              <div className="exercise-type">
+                                <label>Тип упражнения:</label>
+                                <div className="radio-group">
+                                  <label className="radio-label">
+                                    <input
+                                      type="radio"
+                                      name={`exerciseType-${exerciseIndex}`}
+                                      value="strength"
+                                      checked={exercise.exerciseType === 'strength'}
+                                      onChange={(e) =>
+                                        updateExercise(
+                                          exerciseIndex,
+                                          'exerciseType',
+                                          e.target.value,
+                                        )
+                                      }
+                                    />
+                                    <span>Силовое</span>
+                                  </label>
+                                  <label className="radio-label">
+                                    <input
+                                      type="radio"
+                                      name={`exerciseType-${exerciseIndex}`}
+                                      value="cardio"
+                                      checked={exercise.exerciseType === 'cardio'}
+                                      onChange={(e) =>
+                                        updateExercise(
+                                          exerciseIndex,
+                                          'exerciseType',
+                                          e.target.value,
+                                        )
+                                      }
+                                    />
+                                    <span>Кардио</span>
+                                  </label>
+                                </div>
+                              </div>
 
-          <button type="button" onClick={addExercise} className="add-exercise-btn">
-            + Добавить упражнение
-          </button>
+                              <div className="sets">
+                                {(exercise.sets || []).map((set, setIndex) => (
+                                  <div key={setIndex} className="set-row">
+                                    <span className="set-number">Подход {setIndex + 1}:</span>
+
+                                    {exercise.exerciseType === 'strength' ? (
+                                      <>
+                                        <input
+                                          type="text"
+                                          placeholder="Повторения"
+                                          value={set.reps || ''}
+                                          onChange={(e) =>
+                                            updateSet(
+                                              exerciseIndex,
+                                              setIndex,
+                                              'reps',
+                                              e.target.value,
+                                            )
+                                          }
+                                        />
+                                        <input
+                                          type="text"
+                                          placeholder="Вес (кг)"
+                                          value={set.weight || ''}
+                                          onChange={(e) =>
+                                            updateSet(
+                                              exerciseIndex,
+                                              setIndex,
+                                              'weight',
+                                              e.target.value,
+                                            )
+                                          }
+                                        />
+                                      </>
+                                    ) : (
+                                      <>
+                                        <input
+                                          type="text"
+                                          placeholder="Время (мин:сек)"
+                                          value={set.duration || ''}
+                                          onChange={(e) =>
+                                            updateSet(
+                                              exerciseIndex,
+                                              setIndex,
+                                              'duration',
+                                              e.target.value,
+                                            )
+                                          }
+                                        />
+                                        <input
+                                          type="text"
+                                          placeholder="Дистанция (км)"
+                                          value={set.distance || ''}
+                                          onChange={(e) =>
+                                            updateSet(
+                                              exerciseIndex,
+                                              setIndex,
+                                              'distance',
+                                              e.target.value,
+                                            )
+                                          }
+                                        />
+                                      </>
+                                    )}
+
+                                    <input
+                                      type="text"
+                                      placeholder="Заметки"
+                                      value={set.notes || ''}
+                                      onChange={(e) =>
+                                        updateSet(exerciseIndex, setIndex, 'notes', e.target.value)
+                                      }
+                                    />
+
+                                    <button
+                                      type="button"
+                                      onClick={() => removeSet(exerciseIndex, setIndex)}
+                                      className="remove-set-btn"
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                ))}
+
+                                <button
+                                  type="button"
+                                  onClick={() => addSet(exerciseIndex)}
+                                  className="add-set-btn"
+                                >
+                                  + Добавить подход
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
+
+              <button type="button" onClick={addExercise} className="add-exercise-btn">
+                + Добавить упражнение
+              </button>
+            </>
+          )}
         </div>
       ) : (
         <div className="exercises">

@@ -11,6 +11,7 @@ interface GoalGroup {
   totalEntries: number
   latestValue: number
   latestDate: string
+  latestEndDate: string | null
   allValues: number[]
 }
 
@@ -39,20 +40,67 @@ export default function GoalsList() {
     fetchAllGoals()
   }, [])
 
-  const handleGoalClick = (goalGroup: GoalGroup) => {
-    // Находим последнюю цель с таким названием
+  const handleGoalClick = async (goalGroup: GoalGroup) => {
+    // Находим цель с таким названием
     const goalName = goalGroup.name.toLowerCase().trim()
-    const goalForGroup = goals
-      .filter((g) => g.name.toLowerCase().trim() === goalName)
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
+    const goalsWithSameName = goals.filter((g) => g.name.toLowerCase().trim() === goalName)
+
+    // Приоритет: 1) цель с endDate (если есть), 2) цель с самой поздней датой начала
+    let goalForGroup: Goal | undefined = goalsWithSameName
+      .filter((g) => g.endDate) // Сначала ищем цели с endDate
+      .sort((a, b) => {
+        // Сортируем по endDate (новые сверху), затем по date
+        const endDateA = a.endDate ? new Date(a.endDate).getTime() : 0
+        const endDateB = b.endDate ? new Date(b.endDate).getTime() : 0
+        if (endDateA !== endDateB) {
+          return endDateB - endDateA
+        }
+        return new Date(b.date).getTime() - new Date(a.date).getTime()
+      })[0]
+
+    // Если цели с endDate нет, берем с самой поздней датой начала
+    if (!goalForGroup) {
+      goalForGroup = goalsWithSameName.sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+      )[0]
+    }
+
+    // Если все еще не нашли, загружаем цель напрямую по ID из goalGroup
+    if (!goalForGroup && goalGroup.latestEndDate) {
+      // Пытаемся найти цель по endDate из группы
+      goalForGroup = goalsWithSameName.find((g) => {
+        if (!g.endDate || !goalGroup.latestEndDate) return false
+        const gEndDate = new Date(g.endDate).toISOString().split('T')[0]
+        const groupEndDate = new Date(goalGroup.latestEndDate).toISOString().split('T')[0]
+        return gEndDate === groupEndDate
+      })
+    }
 
     if (goalForGroup) {
+      // Загружаем цель с полными данными (включая endDate) через API
+      try {
+        const response = await fetch(`/api/goals`)
+        if (response.ok) {
+          const data = await response.json()
+          const fullGoal = data.docs.find((g: Goal) => g.id === goalForGroup.id)
+          if (fullGoal) {
+            setSelectedGoal(fullGoal)
+            setIsModalOpen(true)
+            return
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching full goal:', error)
+      }
+
+      // Fallback: используем цель из списка
       setSelectedGoal(goalForGroup)
       setIsModalOpen(true)
     }
   }
 
   // Группируем цели по названию
+  // ВАЖНО: В блоке "Цели" показываем только метаданные цели, НЕ значения из активностей
   const groupedGoals = goals.reduce(
     (acc, goal) => {
       const key = goal.name.toLowerCase().trim()
@@ -62,23 +110,20 @@ export default function GoalsList() {
           image: goal.image,
           unit: goal.unit || '',
           totalEntries: 0,
-          latestValue: 0,
+          latestValue: 0, // Всегда 0 в глобальной цели
           latestDate: '',
+          latestEndDate: null,
           allValues: [],
         }
       }
 
-      acc[key].totalEntries++
-      acc[key].allValues.push(goal.value)
-
-      // Обновляем последнее значение, если эта запись новее
+      // Обновляем endDate и изображение из цели (берем последнюю цель)
       const goalDate = new Date(goal.date).getTime()
-      const currentLatestDate = acc[key].latestDate ? new Date(acc[key].latestDate).getTime() : 0
+      const currentGoalDate = acc[key].latestDate ? new Date(acc[key].latestDate).getTime() : 0
 
-      if (goalDate >= currentLatestDate) {
-        acc[key].latestValue = goal.value
+      if (goalDate >= currentGoalDate) {
         acc[key].latestDate = goal.date
-        // Обновляем изображение, если оно есть (берем из последней записи)
+        acc[key].latestEndDate = goal.endDate || null
         if (goal.image) {
           acc[key].image = goal.image
         }
@@ -167,10 +212,17 @@ export default function GoalsList() {
               <div style={{ position: 'relative', zIndex: 1 }}>
                 <div className="stat-value">
                   {goalGroup.latestValue.toLocaleString()}
-                  {goalGroup.unit && ` ${goalGroup.unit}`}
+                  {goalGroup.unit &&
+                    goalGroup.unit.toLowerCase().trim() !== 'секунд' &&
+                    ` ${goalGroup.unit}`}
                 </div>
                 <div className="stat-label">{goalGroup.name}</div>
               </div>
+              {goalGroup.latestEndDate && (
+                <div className="stat-date">
+                  {new Date(goalGroup.latestEndDate).toLocaleDateString('ru-RU')}
+                </div>
+              )}
             </div>
           )
         })}

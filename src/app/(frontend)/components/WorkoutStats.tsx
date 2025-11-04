@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import type { Workout, Goal } from '@/payload-types'
+import GoalDayModal from './GoalDayModal'
 
 interface WorkoutStatsProps {
   workouts: Workout[]
@@ -20,23 +21,32 @@ interface WorkoutStats {
   cardioExercises: number // Количество кардио упражнений
 }
 
+// Расширенный тип для цели с информацией об активности
+type GoalWithActivity = Goal & {
+  activityValue?: number | null
+  activityRecordId?: string | null
+}
+
 export default function WorkoutStats({ workouts, selectedDate }: WorkoutStatsProps) {
-  const [goals, setGoals] = useState<Goal[]>([])
+  const [goals, setGoals] = useState<GoalWithActivity[]>([])
+  const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null)
+  const [isGoalModalOpen, setIsGoalModalOpen] = useState(false)
+
+  // Функция для загрузки целей
+  const fetchGoals = async (date: string) => {
+    try {
+      const response = await fetch(`/api/goals?date=${date}`)
+      if (response.ok) {
+        const data = await response.json()
+        setGoals(data.docs || [])
+      }
+    } catch (error) {
+      console.error('Error fetching goals:', error)
+    }
+  }
 
   // Загружаем цели при изменении выбранной даты
   useEffect(() => {
-    const fetchGoals = async (date: string) => {
-      try {
-        const response = await fetch(`/api/goals?date=${date}`)
-        if (response.ok) {
-          const data = await response.json()
-          setGoals(data.docs || [])
-        }
-      } catch (error) {
-        console.error('Error fetching goals:', error)
-      }
-    }
-
     if (selectedDate) {
       fetchGoals(selectedDate)
     } else {
@@ -249,7 +259,15 @@ export default function WorkoutStats({ workouts, selectedDate }: WorkoutStatsPro
             : {}
 
           return (
-            <div key={goal.id} className="stat-card" style={cardStyle}>
+            <div
+              key={goal.id}
+              className="stat-card"
+              style={{ ...cardStyle, cursor: 'pointer' }}
+              onClick={() => {
+                setSelectedGoal(goal)
+                setIsGoalModalOpen(true)
+              }}
+            >
               {imageUrl && (
                 <div
                   style={{
@@ -267,15 +285,44 @@ export default function WorkoutStats({ workouts, selectedDate }: WorkoutStatsPro
               )}
               <div style={{ position: 'relative', zIndex: 1 }}>
                 <div className="stat-value">
-                  {goal.value.toLocaleString()}
-                  {goal.unit && ` ${goal.unit}`}
+                  {goal.activityValue !== null && goal.activityValue !== undefined
+                    ? goal.activityValue.toLocaleString()
+                    : '—'}
+                  {goal.unit && goal.unit.toLowerCase().trim() !== 'секунд' && ` ${goal.unit}`}
                 </div>
                 <div className="stat-label">{goal.name}</div>
               </div>
+              {goal.endDate && (
+                <div
+                  style={{
+                    fontSize: '1rem',
+                    marginTop: '1rem',
+                    fontWeight: 'bold',
+                    opacity: 0.8,
+                  }}
+                >
+                  {new Date(goal.endDate).toLocaleDateString('ru-RU')}
+                </div>
+              )}
             </div>
           )
         })}
       </div>
+
+      <GoalDayModal
+        goal={selectedGoal}
+        date={selectedDate}
+        isOpen={isGoalModalOpen}
+        onClose={() => {
+          setIsGoalModalOpen(false)
+          setSelectedGoal(null)
+        }}
+        onUpdate={() => {
+          if (selectedDate) {
+            fetchGoals(selectedDate)
+          }
+        }}
+      />
     </section>
   )
 }
