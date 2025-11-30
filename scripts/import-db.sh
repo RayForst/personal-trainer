@@ -36,16 +36,20 @@ trap "rm -rf $TEMP_DIR" EXIT
 # Функция для поиска директории с коллекциями MongoDB (содержит .bson файлы)
 find_mongo_data_dir() {
     local search_dir="$1"
-    # Ищем директорию, которая содержит .bson файлы (коллекции MongoDB)
-    local found_dir=$(find "$search_dir" -type f -name "*.bson" 2>/dev/null | head -n 1 | xargs dirname 2>/dev/null)
     
-    if [ -n "$found_dir" ] && [ -d "$found_dir" ]; then
-        echo "$found_dir"
-        return 0
+    # Сначала ищем директорию с именем базы данных, которая содержит .bson файлы
+    local db_dir=$(find "$search_dir" -type d -name "$DB_NAME" 2>/dev/null | head -n 1)
+    if [ -n "$db_dir" ] && [ -d "$db_dir" ]; then
+        # Проверяем, есть ли в ней .bson файлы
+        if [ -n "$(find "$db_dir" -maxdepth 1 -name "*.bson" ! -name "._*" 2>/dev/null)" ]; then
+            echo "$db_dir"
+            return 0
+        fi
     fi
     
-    # Если не нашли .bson файлы, ищем директорию с именем базы данных
-    found_dir=$(find "$search_dir" -type d -name "$DB_NAME" 2>/dev/null | head -n 1)
+    # Ищем директорию, которая содержит .bson файлы (коллекции MongoDB)
+    local found_dir=$(find "$search_dir" -type f -name "*.bson" ! -name "._*" 2>/dev/null | head -n 1 | xargs dirname 2>/dev/null)
+    
     if [ -n "$found_dir" ] && [ -d "$found_dir" ]; then
         echo "$found_dir"
         return 0
@@ -77,15 +81,28 @@ if [ ! -d "$RESTORE_PATH" ]; then
 fi
 
 # Проверяем наличие .bson файлов (коллекций)
-if [ -z "$(find "$RESTORE_PATH" -maxdepth 1 -name "*.bson" 2>/dev/null)" ]; then
+BSON_FILES=$(find "$RESTORE_PATH" -maxdepth 1 -name "*.bson" ! -name "._*" 2>/dev/null)
+if [ -z "$BSON_FILES" ]; then
     echo "⚠️  Предупреждение: В директории $RESTORE_PATH не найдено .bson файлов"
     echo "   Продолжаем импорт, но возможно структура архива неверна"
+fi
+
+# Очищаем метаданные macOS (файлы ._*)
+echo "🧹 Очистка метаданных macOS..."
+find "$RESTORE_PATH" -name "._*" -type f -delete 2>/dev/null || true
+
+# Подсчитываем количество коллекций для импорта
+COLLECTION_COUNT=$(find "$RESTORE_PATH" -maxdepth 1 -name "*.bson" ! -name "._*" 2>/dev/null | wc -l | tr -d ' ')
+if [ "$COLLECTION_COUNT" -eq 0 ]; then
+    echo "❌ Ошибка: Не найдено коллекций для импорта в $RESTORE_PATH"
+    exit 1
 fi
 
 echo "📥 Импорт базы данных..."
 echo "🔌 Подключение: ${MONGO_HOST}:${MONGO_PORT}"
 echo "📁 Источник: $RESTORE_PATH"
 echo "💾 База данных: $DB_NAME"
+echo "📊 Найдено коллекций: $COLLECTION_COUNT"
 echo ""
 read -p "⚠️  ВНИМАНИЕ: Это перезапишет существующие данные в базе '$DB_NAME'. Продолжить? (y/N) " -n 1 -r
 echo
@@ -95,10 +112,11 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 # Выполняем mongorestore
-# Используем --nsInclude вместо устаревшего --db
+# mongorestore ожидает директорию, где находятся .bson файлы
+# Используем простой формат без дополнительных флагов для совместимости
 mongorestore \
     --host="${MONGO_HOST}:${MONGO_PORT}" \
-    --nsInclude="${DB_NAME}.*" \
+    --db="$DB_NAME" \
     --drop \
     "$RESTORE_PATH"
 
