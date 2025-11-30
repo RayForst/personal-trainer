@@ -13,12 +13,14 @@ async function checkAuth(): Promise<boolean> {
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   // Проверяем авторизацию
   const authenticated = await checkAuth()
   if (!authenticated) {
     return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
   }
+
+  const { id } = await params
 
   try {
     const payload = await getPayload({ config })
@@ -27,7 +29,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     // Сначала получаем текущую запись, чтобы понять, это пропуск или обычная тренировка
     const currentWorkout = await payload.findByID({
       collection: 'workouts',
-      id: params.id,
+      id,
     })
 
     // Подготавливаем данные для обновления
@@ -58,7 +60,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     const updatedWorkout = await payload.update({
       collection: 'workouts',
-      id: params.id,
+      id,
       data: updateData,
     })
 
@@ -69,12 +71,14 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   // Проверяем авторизацию
   const authenticated = await checkAuth()
   if (!authenticated) {
     return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
   }
+
+  const { id } = await params
 
   try {
     const payload = await getPayload({ config })
@@ -82,7 +86,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     // Получаем удаляемую запись
     const workoutToDelete = await payload.findByID({
       collection: 'workouts',
-      id: params.id,
+      id,
     })
 
     // Если это пропуск с диапазоном дат, нужно удалить все связанные записи
@@ -168,7 +172,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       // Если это обычная тренировка или пропуск без диапазона, удаляем только эту запись
       await payload.delete({
         collection: 'workouts',
-        id: params.id,
+        id,
       })
 
       return NextResponse.json({ success: true })

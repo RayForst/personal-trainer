@@ -10,9 +10,9 @@ import type { Workout } from '@/payload-types'
 import WorkoutList from './components/WorkoutList'
 
 interface PageProps {
-  params: {
+  params: Promise<{
     date: string
-  }
+  }>
 }
 
 export default async function WorkoutDayPage({ params }: PageProps) {
@@ -21,6 +21,8 @@ export default async function WorkoutDayPage({ params }: PageProps) {
   if (!authenticated) {
     redirect('/login')
   }
+
+  const { date } = await params
 
   const headers = await getHeaders()
   const payloadConfig = await config
@@ -32,7 +34,7 @@ export default async function WorkoutDayPage({ params }: PageProps) {
     collection: 'workouts',
     where: {
       date: {
-        equals: params.date,
+        equals: date,
       },
     },
     sort: '-createdAt',
@@ -54,7 +56,7 @@ export default async function WorkoutDayPage({ params }: PageProps) {
         <Link href="/" className="back-link">
           ← Назад к дневнику
         </Link>
-        <h1>Тренировки за {formatDate(params.date)}</h1>
+        <h1>Тренировки за {formatDate(date)}</h1>
       </div>
 
       <WorkoutList initialWorkouts={workouts.docs} />

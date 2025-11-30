@@ -2,6 +2,7 @@ import { getPayload } from 'payload'
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import config from '@/payload.config'
+import type { Goal } from '@/payload-types'
 
 async function checkAuth(): Promise<boolean> {
   try {
@@ -104,8 +105,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const date = searchParams.get('date')
 
-    const query: any = {
-      collection: 'goals',
+    const query = {
+      collection: 'goals' as const,
       sort: '-date',
       depth: 2, // Загружаем связанное изображение
     }
@@ -114,7 +115,7 @@ export async function GET(request: NextRequest) {
 
     // Если указана дата, фильтруем цели по диапазону дат и загружаем активности
     if (date) {
-      const filteredGoals = goals.docs.filter((goal) => {
+      const filteredGoals = (goals.docs as Goal[]).filter((goal) => {
         const goalDate = new Date(goal.date).toISOString().split('T')[0]
         
         // Если дата начала цели больше выбранной даты, не показываем

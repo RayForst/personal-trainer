@@ -2,6 +2,7 @@ import { getPayload } from 'payload'
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import config from '@/payload.config'
+import type { GoalActivityRecord } from '@/payload-types'
 
 async function checkAuth(): Promise<boolean> {
   try {
@@ -80,25 +81,24 @@ export async function GET(request: NextRequest) {
     const date = searchParams.get('date')
     const goalId = searchParams.get('goalId')
 
-    const query: any = {
-      collection: 'goal-activity-records',
+    const query = {
+      collection: 'goal-activity-records' as const,
       sort: '-date',
       depth: 2, // Загружаем связанную цель
-    }
-
-    if (goalId) {
-      query.where = {
-        goal: {
-          equals: goalId,
+      ...(goalId && {
+        where: {
+          goal: {
+            equals: goalId,
+          },
         },
-      }
+      }),
     }
 
     const records = await payload.find(query)
 
     // Если указана дата, фильтруем записи
     if (date) {
-      const filteredRecords = records.docs.filter((record) => {
+      const filteredRecords = (records.docs as GoalActivityRecord[]).filter((record) => {
         const recordDate = new Date(record.date).toISOString().split('T')[0]
         return recordDate === date
       })

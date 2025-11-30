@@ -13,12 +13,14 @@ async function checkAuth(): Promise<boolean> {
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   // Проверяем авторизацию
   const authenticated = await checkAuth()
   if (!authenticated) {
     return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
   }
+
+  const { id } = await params
 
   try {
     const payload = await getPayload({ config })
@@ -54,7 +56,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     // Получаем текущую запись, чтобы убедиться, что goal не изменяется
     const existingRecord = await payload.findByID({
       collection: 'goal-activity-records',
-      id: params.id,
+      id,
     })
 
     if (!existingRecord) {
@@ -64,13 +66,13 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     // Обновляем только date и value, сохраняя исходную связь с goal
     const updatedRecord = await payload.update({
       collection: 'goal-activity-records',
-      id: params.id,
+      id,
       data: recordData,
     })
 
     // Логируем для отладки
     console.log('Updated activity record:', {
-      recordId: params.id,
+      recordId: id,
       goalId: existingRecord.goal,
       date,
       value: parsedValue,
@@ -83,19 +85,21 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   // Проверяем авторизацию
   const authenticated = await checkAuth()
   if (!authenticated) {
     return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
   }
 
+  const { id } = await params
+
   try {
     const payload = await getPayload({ config })
 
     await payload.delete({
       collection: 'goal-activity-records',
-      id: params.id,
+      id,
     })
 
     return NextResponse.json({ success: true })
