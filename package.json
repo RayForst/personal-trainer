@@ -15,7 +15,9 @@
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
     "test": "pnpm run test:int && pnpm run test:e2e",
     "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --no-experimental-strip-types\" pnpm exec playwright test",
-    "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts"
+    "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
+    "db:export": "chmod +x scripts/export-db.sh && ./scripts/export-db.sh",
+    "db:import": "chmod +x scripts/import-db.sh && ./scripts/import-db.sh"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
