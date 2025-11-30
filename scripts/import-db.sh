@@ -33,28 +33,53 @@ MONGO_PORT=${4:-"27017"}
 TEMP_DIR=$(mktemp -d)
 trap "rm -rf $TEMP_DIR" EXIT
 
-# Проверяем, является ли источник архивом или директорией
-if [ -f "$IMPORT_SOURCE" ] && [[ "$IMPORT_SOURCE" == *.tar.gz ]] || [[ "$IMPORT_SOURCE" == *.tgz ]]; then
-    echo "📦 Распаковка архива..."
-    tar -xzf "$IMPORT_SOURCE" -C "$TEMP_DIR"
-    # Находим директорию с данными (обычно это первая поддиректория)
-    RESTORE_PATH=$(find "$TEMP_DIR" -type d -mindepth 1 -maxdepth 1 | head -n 1)
-elif [ -d "$IMPORT_SOURCE" ]; then
-    # Если это директория, ищем в ней директорию с именем базы данных
-    if [ -d "$IMPORT_SOURCE/$DB_NAME" ]; then
-        RESTORE_PATH="$IMPORT_SOURCE/$DB_NAME"
-    else
-        # Или используем саму директорию, если она содержит данные
-        RESTORE_PATH="$IMPORT_SOURCE"
+# Функция для поиска директории с коллекциями MongoDB (содержит .bson файлы)
+find_mongo_data_dir() {
+    local search_dir="$1"
+    # Ищем директорию, которая содержит .bson файлы (коллекции MongoDB)
+    local found_dir=$(find "$search_dir" -type f -name "*.bson" 2>/dev/null | head -n 1 | xargs dirname 2>/dev/null)
+    
+    if [ -n "$found_dir" ] && [ -d "$found_dir" ]; then
+        echo "$found_dir"
+        return 0
     fi
+    
+    # Если не нашли .bson файлы, ищем директорию с именем базы данных
+    found_dir=$(find "$search_dir" -type d -name "$DB_NAME" 2>/dev/null | head -n 1)
+    if [ -n "$found_dir" ] && [ -d "$found_dir" ]; then
+        echo "$found_dir"
+        return 0
+    fi
+    
+    # Если ничего не нашли, возвращаем исходную директорию
+    echo "$search_dir"
+    return 1
+}
+
+# Проверяем, является ли источник архивом или директорией
+if [ -f "$IMPORT_SOURCE" ] && ([[ "$IMPORT_SOURCE" == *.tar.gz ]] || [[ "$IMPORT_SOURCE" == *.tgz ]]); then
+    echo "📦 Распаковка архива..."
+    tar -xzf "$IMPORT_SOURCE" -C "$TEMP_DIR" 2>/dev/null || tar -xzf "$IMPORT_SOURCE" -C "$TEMP_DIR"
+    # Ищем директорию с данными MongoDB
+    RESTORE_PATH=$(find_mongo_data_dir "$TEMP_DIR")
+elif [ -d "$IMPORT_SOURCE" ]; then
+    # Если это директория, ищем в ней директорию с данными
+    RESTORE_PATH=$(find_mongo_data_dir "$IMPORT_SOURCE")
 else
     echo "❌ Ошибка: Файл или директория не найдены: $IMPORT_SOURCE"
     exit 1
 fi
 
+# Проверяем, что директория существует и содержит данные
 if [ ! -d "$RESTORE_PATH" ]; then
     echo "❌ Ошибка: Не удалось найти данные для импорта в $IMPORT_SOURCE"
     exit 1
+fi
+
+# Проверяем наличие .bson файлов (коллекций)
+if [ -z "$(find "$RESTORE_PATH" -maxdepth 1 -name "*.bson" 2>/dev/null)" ]; then
+    echo "⚠️  Предупреждение: В директории $RESTORE_PATH не найдено .bson файлов"
+    echo "   Продолжаем импорт, но возможно структура архива неверна"
 fi
 
 echo "📥 Импорт базы данных..."
@@ -70,9 +95,10 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 # Выполняем mongorestore
+# Используем --nsInclude вместо устаревшего --db
 mongorestore \
     --host="${MONGO_HOST}:${MONGO_PORT}" \
-    --db="$DB_NAME" \
+    --nsInclude="${DB_NAME}.*" \
     --drop \
     "$RESTORE_PATH"
 
