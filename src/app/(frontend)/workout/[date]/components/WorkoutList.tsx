@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import Link from 'next/link'
 import type { Workout } from '@/payload-types'
 import EditableWorkoutCard from './EditableWorkoutCard'
 
@@ -36,9 +37,9 @@ export default function WorkoutList({
     return (
       <div className="no-workouts">
         <p>В этот день тренировок не было</p>
-        <a href="/" className="add-workout-link">
+        <Link href="/" className="add-workout-link">
           Добавить тренировку
-        </a>
+        </Link>
       </div>
     )
   }

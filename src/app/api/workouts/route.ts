@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const date = searchParams.get('date')
 
-    let query: any = {
+    const query: any = {
       collection: 'workouts',
       sort: '-date',
     }

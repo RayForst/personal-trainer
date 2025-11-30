@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
     const date = searchParams.get('date')
     const goalId = searchParams.get('goalId')
 
-    let query: any = {
+    const query: any = {
       collection: 'goal-activity-records',
       sort: '-date',
       depth: 2, // Загружаем связанную цель
@@ -112,4 +112,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to fetch records' }, { status: 500 })
   }
 }
-

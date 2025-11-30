@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
     const unit = formData.get('unit') as string
     const notes = formData.get('notes') as string
     const imageFile = formData.get('image') as File | null
+    const imageIdFromForm = formData.get('imageId') as string | null
 
     let imageId: string | null = null
 
@@ -103,7 +104,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const date = searchParams.get('date')
 
-    let query: any = {
+    const query: any = {
       collection: 'goals',
       sort: '-date',
       depth: 2, // Загружаем связанное изображение
