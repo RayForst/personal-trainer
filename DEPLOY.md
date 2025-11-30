@@ -93,9 +93,9 @@ pnpm build
 
 11. **Запустите через PM2:**
 
-Файл `ecosystem.config.js` уже включен в проект. Просто запустите:
+Файл `ecosystem.config.cjs` уже включен в проект. Просто запустите:
 ```bash
-pm2 start ecosystem.config.js
+pm2 start ecosystem.config.cjs
 pm2 save
 pm2 startup
 # Выполните команду, которую покажет pm2 startup (для автозапуска при перезагрузке сервера)

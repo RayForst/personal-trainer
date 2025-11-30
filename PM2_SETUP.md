@@ -46,7 +46,7 @@ mkdir -p logs
 pnpm build
 
 # Запустите через PM2
-pm2 start ecosystem.config.js
+pm2 start ecosystem.config.cjs
 
 # Сохраните конфигурацию PM2
 pm2 save
