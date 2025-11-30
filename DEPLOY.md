@@ -81,54 +81,35 @@ AUTH_PASSWORD=<ваш-пароль>
 openssl rand -base64 32
 ```
 
-9. **Соберите проект:**
+9. **Создайте папку для логов:**
+```bash
+mkdir -p logs
+```
+
+10. **Соберите проект:**
 ```bash
 pnpm build
 ```
 
-10. **Запустите через PM2:**
+11. **Запустите через PM2:**
 
-Вариант 1 (через pnpm start):
-```bash
-pm2 start pnpm --name "personal-trainer" -- start
-pm2 save
-pm2 startup
-# Выполните команду, которую покажет pm2 startup
-```
-
-Вариант 2 (через ecosystem.config.js - более надежный):
-```bash
-# Создайте файл ecosystem.config.js
-nano ecosystem.config.js
-```
-
-Добавьте содержимое:
-```javascript
-module.exports = {
-  apps: [{
-    name: 'personal-trainer',
-    script: 'pnpm',
-    args: 'start',
-    cwd: '/opt/personal-trainer',
-    interpreter: 'none',
-    env: {
-      NODE_ENV: 'production'
-    }
-  }]
-}
-```
-
-Затем:
+Файл `ecosystem.config.js` уже включен в проект. Просто запустите:
 ```bash
 pm2 start ecosystem.config.js
 pm2 save
 pm2 startup
-# Выполните команду, которую покажет pm2 startup
+# Выполните команду, которую покажет pm2 startup (для автозапуска при перезагрузке сервера)
+```
+
+Проверьте статус:
+```bash
+pm2 status
+pm2 logs personal-trainer
 ```
 
 ## Настройка Nginx
 
-11. **Создайте конфигурацию Nginx `/etc/nginx/sites-available/trainer.scape-dev.com`:**
+12. **Создайте конфигурацию Nginx `/etc/nginx/sites-available/trainer.scape-dev.com`:**
 ```bash
 sudo nano /etc/nginx/sites-available/trainer.scape-dev.com
 ```
@@ -153,7 +134,7 @@ server {
 }
 ```
 
-12. **Активируйте конфигурацию:**
+13. **Активируйте конфигурацию:**
 ```bash
 sudo ln -s /etc/nginx/sites-available/trainer.scape-dev.com /etc/nginx/sites-enabled/
 sudo nginx -t
@@ -162,7 +143,7 @@ sudo systemctl reload nginx
 
 ## SSL сертификат
 
-13. **Получите SSL сертификат:**
+14. **Получите SSL сертификат:**
 ```bash
 sudo certbot --nginx -d trainer.scape-dev.com
 ```
@@ -181,6 +162,8 @@ sudo certbot --nginx -d trainer.scape-dev.com
   pnpm build
   pm2 restart personal-trainer
   ```
+- **Просмотр логов в реальном времени:** `pm2 logs personal-trainer --lines 100`
+- **Мониторинг:** `pm2 monit`
 - **Бэкап MongoDB:**
   ```bash
   mongodump --out /opt/backups/mongo-$(date +%Y%m%d)
