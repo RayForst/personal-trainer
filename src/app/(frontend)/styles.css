@@ -1546,3 +1546,125 @@ body {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* Секция графика упражнений */
+.chart-section {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.chart-section h2 {
+  margin: 0 0 1.5rem 0;
+  color: #2c3e50;
+  font-size: 1.5rem;
+}
+
+.chart-section h2 sup {
+  font-size: 0.7em;
+  color: #6c757d;
+  margin-left: 0.5rem;
+  font-weight: normal;
+}
+
+.chart-controls {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 200px;
+}
+
+.control-group label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.9rem;
+}
+
+.chart-select {
+  padding: 0.75rem;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.chart-select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.chart-container {
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.chart-placeholder {
+  text-align: center;
+  color: #6c757d;
+  padding: 3rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px dashed #e9ecef;
+}
+
+.chart-summary {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  padding-top: 1rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.summary-label {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.summary-value {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+/* Recharts tooltip стили */
+.recharts-tooltip-wrapper {
+  z-index: 100;
+}
+
+@media (max-width: 768px) {
+  .chart-controls {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .control-group {
+    min-width: 100%;
+  }
+  
+  .chart-summary {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .chart-container {
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+  }
+}

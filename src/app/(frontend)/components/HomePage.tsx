@@ -7,6 +7,7 @@ import AddWorkoutForm from './AddWorkoutForm'
 import WorkoutList from '../workout/[date]/components/WorkoutList'
 import WorkoutStats from './WorkoutStats'
 import GoalsList from './GoalsList'
+import ExerciseChart from './ExerciseChart'
 import type { Workout } from '@/payload-types'
 
 interface HomePageProps {
@@ -181,6 +182,9 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
 
         {/* Статистика дня */}
         <WorkoutStats workouts={selectedDateWorkouts} selectedDate={selectedDate} />
+
+        {/* График прогресса упражнений */}
+        <ExerciseChart workouts={allWorkouts} />
 
         {/* Цели */}
         <GoalsList />
