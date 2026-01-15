@@ -39,7 +39,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       notes: body.notes || null,
     }
 
-    // Если это пропуск, обновляем поля пропуска
     if (body.isSkip || currentWorkout.isSkip) {
       updateData.isSkip = true
       updateData.skipEndDate = body.skipEndDate || null
@@ -50,10 +49,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       updateData.duration = null
     } else {
       // Если это обычная тренировка
-      updateData.exercises = body.exercises?.map((exercise: any) => ({
-        ...exercise,
-        exerciseType: exercise.exerciseType || 'strength',
-      })) || []
+      updateData.exercises =
+        body.exercises?.map((exercise: any) => ({
+          ...exercise,
+          exerciseType: exercise.exerciseType || 'strength',
+        })) || []
       updateData.duration = body.duration ? parseInt(body.duration) : null
       updateData.isSkip = false
     }
@@ -71,7 +71,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   // Проверяем авторизацию
   const authenticated = await checkAuth()
   if (!authenticated) {
