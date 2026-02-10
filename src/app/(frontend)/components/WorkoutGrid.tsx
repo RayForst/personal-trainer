@@ -87,33 +87,33 @@ export default function WorkoutGrid({ workouts, onDaySelect }: WorkoutGridProps)
     },
   )
 
+  // Цвет фона — только по реальным тренировкам (пропуски не закрашивают плитку)
   const getIntensityColor = (workouts: Workout[]) => {
-    // Проверяем, есть ли пропуски
-    const skipWorkouts = workouts.filter((workout) => workout.isSkip)
-    if (skipWorkouts.length > 0) {
-      // Возвращаем цвет первого пропуска (если их несколько)
-      const skipColor = skipWorkouts[0].skipColor
-      switch (skipColor) {
-        case 'blue':
-          return '#007bff'
-        case 'red':
-          return '#dc3545'
-        case 'orange':
-          return '#fd7e14'
-        case 'yellow':
-          return '#ffc107'
-        default:
-          return '#007bff'
-      }
-    }
-
-    // Обычная логика для тренировок
     const workoutCount = workouts.filter((workout) => !workout.isSkip).length
     if (workoutCount === 0) return '#ebedf0'
     if (workoutCount === 1) return '#c6e48b'
     if (workoutCount === 2) return '#7bc96f'
     if (workoutCount === 3) return '#239a3b'
     return '#196127'
+  }
+
+  // Цвет бордера для пропуска (травма и т.д.) — показываем обводкой 1px, а не заливкой
+  const getSkipBorderColor = (workouts: Workout[]): string | null => {
+    const skipWorkouts = workouts.filter((workout) => workout.isSkip)
+    if (skipWorkouts.length === 0) return null
+    const skipColor = skipWorkouts[0].skipColor
+    switch (skipColor) {
+      case 'blue':
+        return '#007bff'
+      case 'red':
+        return '#dc3545'
+      case 'orange':
+        return '#fd7e14'
+      case 'yellow':
+        return '#ffc107'
+      default:
+        return '#007bff'
+    }
   }
 
   const getTooltipText = (day: (typeof days)[0]) => {
@@ -123,17 +123,19 @@ export default function WorkoutGrid({ workouts, onDaySelect }: WorkoutGridProps)
 
     const skipWorkouts = day.workouts.filter((workout) => workout.isSkip)
     const regularWorkouts = day.workouts.filter((workout) => !workout.isSkip)
+    const skipReason =
+      skipWorkouts[0] &&
+      (skipWorkouts[0].skipReason === 'other'
+        ? skipWorkouts[0].customReason
+        : skipWorkouts[0].skipReason)
 
-    if (skipWorkouts.length > 0) {
-      const skipReason =
-        skipWorkouts[0].skipReason === 'other'
-          ? skipWorkouts[0].customReason
-          : skipWorkouts[0].skipReason
-      return `${day.date}: Пропуск - ${skipReason}`
+    if (regularWorkouts.length > 0) {
+      const workoutNames = regularWorkouts.map((workout) => workout.name).join(', ')
+      const skipPart = skipWorkouts.length > 0 ? ` (период пропуска: ${skipReason})` : ''
+      return `${day.date}: ${regularWorkouts.length} тренировка(ок) - ${workoutNames}${skipPart}`
     }
 
-    const workoutNames = regularWorkouts.map((workout) => workout.name).join(', ')
-    return `${day.date}: ${regularWorkouts.length} тренировка(ок) - ${workoutNames}`
+    return `${day.date}: Пропуск - ${skipReason}`
   }
 
   return (
@@ -182,6 +184,7 @@ export default function WorkoutGrid({ workouts, onDaySelect }: WorkoutGridProps)
                   className="day-square"
                   style={{
                     backgroundColor: getIntensityColor(day.workouts),
+                    border: `1px solid ${getSkipBorderColor(day.workouts) ?? 'transparent'}`,
                     cursor: 'pointer',
                   }}
                   title={getTooltipText(day)}

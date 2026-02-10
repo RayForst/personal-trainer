@@ -20,7 +20,6 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedDateWorkouts, setSelectedDateWorkouts] = useState<Workout[]>([])
   const [allWorkouts, setAllWorkouts] = useState<Workout[]>(initialWorkouts)
-  const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(false)
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(false)
 
   const handleLogout = async () => {
@@ -37,7 +36,6 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
 
   const handleDaySelect = async (date: string) => {
     setSelectedDate(date)
-    setIsLeftPanelOpen(true)
 
     // Фильтруем тренировки за выбранную дату
     const workoutsForDate = allWorkouts.filter((workout) => {
@@ -52,8 +50,7 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
     setIsRightPanelOpen(true)
   }
 
-  const handleCloseLeftPanel = () => {
-    setIsLeftPanelOpen(false)
+  const handleCloseDayDetail = () => {
     setSelectedDate(null)
     setSelectedDateWorkouts([])
   }
@@ -114,60 +111,17 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
 
   return (
     <div
-      className={`triptych-container ${isLeftPanelOpen ? 'left-open' : ''} ${isRightPanelOpen ? 'right-open' : ''}`}
+      className={`triptych-container ${isRightPanelOpen ? 'right-open' : ''}`}
     >
-      {/* Левая выдвижная панель - Тренировки за день */}
-      <aside
-        className={`left-panel ${isLeftPanelOpen ? 'open' : ''}`}
-        onClick={!isLeftPanelOpen ? () => setIsLeftPanelOpen(true) : undefined}
-        title={!isLeftPanelOpen ? 'Открыть тренировки' : undefined}
-      >
-        {!isLeftPanelOpen && (
-          <div
-            className="panel-tab"
-            onClick={(e) => {
-              e.stopPropagation()
-              setIsLeftPanelOpen(true)
-            }}
-            title="Открыть тренировки"
-          >
-            <span>Тренировки</span>
-          </div>
-        )}
-        <div className="panel-content" onClick={(e) => isLeftPanelOpen && e.stopPropagation()}>
-          <div className="panel-header">
-            <h2>
-              Тренировки за день{' '}
-              {selectedDate && <span className="date-info">({formatDate(selectedDate)})</span>}
-            </h2>
-            <button onClick={handleCloseLeftPanel} className="close-btn">
-              ×
-            </button>
-          </div>
-          {selectedDate && selectedDateWorkouts.length > 0 ? (
-            <div className="panel-body">
-              <WorkoutList
-                initialWorkouts={selectedDateWorkouts}
-                onWorkoutUpdate={handleWorkoutUpdate}
-                onWorkoutDelete={handleWorkoutDelete}
-              />
-            </div>
-          ) : selectedDate ? (
-            <div className="panel-body placeholder-content">
-              <p>В этот день тренировок не было</p>
-            </div>
-          ) : null}
-        </div>
-      </aside>
-
       {/* Центральная часть - История и статистика */}
       <main className="center-content">
+        {/* График прогресса упражнений */}
+        <ExerciseChart workouts={allWorkouts} />
+
         {/* Сетка активности */}
         <section className="activity-section">
           <div className="activity-header">
-            <h2>
-              История тренировок<sup>Последний год активности</sup>
-            </h2>
+            <h2 style={{ marginBottom: 0 }}>История тренировок</h2>
             <div className="header-buttons">
               <button onClick={handleAddWorkoutClick} className="add-workout-btn">
                 ДОБАВИТЬ
@@ -178,13 +132,42 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
             </div>
           </div>
           <WorkoutGrid workouts={allWorkouts} onDaySelect={handleDaySelect} />
+
+          {/* История дня под плиткой */}
+          {selectedDate && (
+            <div className="day-detail-block">
+              <div className="day-detail-header">
+                <h3 className="day-detail-title">
+                  Тренировки за день{' '}
+                  <span className="date-info">({formatDate(selectedDate)})</span>
+                </h3>
+                <button
+                  type="button"
+                  onClick={handleCloseDayDetail}
+                  className="day-detail-close-btn"
+                >
+                  ЗАКРЫТЬ
+                </button>
+              </div>
+              {selectedDateWorkouts.length > 0 ? (
+                <div className="day-detail-body">
+                  <WorkoutList
+                    initialWorkouts={selectedDateWorkouts}
+                    onWorkoutUpdate={handleWorkoutUpdate}
+                    onWorkoutDelete={handleWorkoutDelete}
+                  />
+                </div>
+              ) : (
+                <div className="day-detail-body day-detail-placeholder">
+                  <p>В этот день тренировок не было</p>
+                </div>
+              )}
+            </div>
+          )}
         </section>
 
         {/* Статистика дня */}
         <WorkoutStats workouts={selectedDateWorkouts} selectedDate={selectedDate} />
-
-        {/* График прогресса упражнений */}
-        <ExerciseChart workouts={allWorkouts} />
 
         {/* Цели */}
         <GoalsList />
