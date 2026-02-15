@@ -45,6 +45,12 @@ export default function Header() {
           >
             Цели
           </button>
+          <button
+            onClick={() => router.push('/exercises')}
+            className={`nav-btn ${pathname === '/exercises' ? 'active' : ''}`}
+          >
+            Упражнения
+          </button>
         </nav>
         <div className="header-actions">
           <button onClick={handleLogout} className="logout-btn" title="Выйти">
