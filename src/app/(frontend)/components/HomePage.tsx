@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import WorkoutGrid from './WorkoutGrid'
 import AddWorkoutForm from './AddWorkoutForm'
@@ -20,7 +20,7 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedDateWorkouts, setSelectedDateWorkouts] = useState<Workout[]>([])
   const [allWorkouts, setAllWorkouts] = useState<Workout[]>(initialWorkouts)
-  const [isRightPanelOpen, setIsRightPanelOpen] = useState(false)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
 
   const handleLogout = async () => {
     try {
@@ -47,7 +47,7 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
   }
 
   const handleAddWorkoutClick = () => {
-    setIsRightPanelOpen(true)
+    setIsAddModalOpen(true)
   }
 
   const handleCloseDayDetail = () => {
@@ -55,9 +55,18 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
     setSelectedDateWorkouts([])
   }
 
-  const handleCloseRightPanel = () => {
-    setIsRightPanelOpen(false)
+  const handleCloseAddModal = () => {
+    setIsAddModalOpen(false)
   }
+
+  useEffect(() => {
+    if (!isAddModalOpen) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleCloseAddModal()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [isAddModalOpen])
 
   const handleWorkoutUpdate = (updatedWorkout: Workout) => {
     // Обновляем тренировку в общем списке
@@ -110,9 +119,7 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
   }
 
   return (
-    <div
-      className={`triptych-container ${isRightPanelOpen ? 'right-open' : ''}`}
-    >
+    <div className="triptych-container">
       {/* Центральная часть - История и статистика */}
       <main className="center-content">
         {/* График прогресса упражнений */}
@@ -173,36 +180,39 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
         <GoalsList />
       </main>
 
-      {/* Правая выдвижная панель - Добавить тренировку */}
-      <aside
-        className={`right-panel ${isRightPanelOpen ? 'open' : ''}`}
-        onClick={!isRightPanelOpen ? () => setIsRightPanelOpen(true) : undefined}
-        title={!isRightPanelOpen ? 'Открыть форму добавления' : undefined}
-      >
-        {!isRightPanelOpen && (
-          <div
-            className="panel-tab"
-            onClick={(e) => {
-              e.stopPropagation()
-              setIsRightPanelOpen(true)
-            }}
-            title="Открыть форму добавления"
-          >
-            <span>Добавить</span>
-          </div>
-        )}
-        <div className="panel-content" onClick={(e) => isRightPanelOpen && e.stopPropagation()}>
-          <div className="panel-header">
-            <h2>Добавить тренировку</h2>
-            <button onClick={handleCloseRightPanel} className="close-btn">
-              ×
-            </button>
-          </div>
-          <div className="panel-body">
-            <AddWorkoutForm templates={recentWorkouts} />
+      {/* Модалка Добавить тренировку */}
+      {isAddModalOpen && (
+        <div
+          className="add-workout-modal-overlay"
+          onClick={handleCloseAddModal}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="add-workout-modal-title"
+        >
+          <div className="add-workout-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="add-workout-modal-header">
+              <h2 id="add-workout-modal-title">Добавить тренировку</h2>
+              <button
+                type="button"
+                onClick={handleCloseAddModal}
+                className="add-workout-modal-close"
+                aria-label="Закрыть"
+              >
+                ×
+              </button>
+            </div>
+            <div className="add-workout-modal-body">
+              <AddWorkoutForm
+                templates={recentWorkouts}
+                onSuccess={() => {
+                  handleCloseAddModal()
+                  router.refresh()
+                }}
+              />
+            </div>
           </div>
         </div>
-      </aside>
+      )}
     </div>
   )
 }

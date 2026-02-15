@@ -7,11 +7,12 @@ import { showToast } from '@/lib/toast'
 
 interface AddWorkoutFormProps {
   templates: Workout[]
+  onSuccess?: () => void
 }
 
 type TabType = 'workout' | 'skip' | 'goal'
 
-export default function AddWorkoutForm({ templates }: AddWorkoutFormProps) {
+export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormProps) {
   const [activeTab, setActiveTab] = useState<TabType>('workout')
   const [formData, setFormData] = useState({
     name: '',
@@ -203,7 +204,8 @@ export default function AddWorkoutForm({ templates }: AddWorkoutFormProps) {
           duration: '',
         })
         showToast.success('Тренировка успешно добавлена!')
-        window.location.reload()
+        if (onSuccess) onSuccess()
+        else window.location.reload()
       } else {
         showToast.error('Ошибка при добавлении тренировки')
       }
@@ -266,7 +268,8 @@ export default function AddWorkoutForm({ templates }: AddWorkoutFormProps) {
           notes: '',
         })
         showToast.success(`Пропуск тренировки отмечен для ${datesToSkip.length} дня(ей)!`)
-        window.location.reload()
+        if (onSuccess) onSuccess()
+        else window.location.reload()
       } else {
         showToast.error('Ошибка при отметке пропуска')
       }
@@ -316,7 +319,8 @@ export default function AddWorkoutForm({ templates }: AddWorkoutFormProps) {
           image: null,
         })
         showToast.success('Цель успешно добавлена!')
-        window.location.reload()
+        if (onSuccess) onSuccess()
+        else window.location.reload()
       } else {
         showToast.error('Ошибка при добавлении цели')
       }
