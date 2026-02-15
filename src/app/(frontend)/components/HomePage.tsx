@@ -6,8 +6,6 @@ import WorkoutGrid from './WorkoutGrid'
 import AddWorkoutForm from './AddWorkoutForm'
 import WorkoutList from '../workout/[date]/components/WorkoutList'
 import WorkoutStats from './WorkoutStats'
-import GoalsList from './GoalsList'
-import ExerciseChart from './ExerciseChart'
 import type { Workout } from '@/payload-types'
 
 interface HomePageProps {
@@ -21,18 +19,6 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
   const [selectedDateWorkouts, setSelectedDateWorkouts] = useState<Workout[]>([])
   const [allWorkouts, setAllWorkouts] = useState<Workout[]>(initialWorkouts)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' })
-      router.push('/login')
-      router.refresh()
-    } catch (error) {
-      console.error('Logout error:', error)
-      // Все равно перенаправляем на страницу логина
-      router.push('/login')
-    }
-  }
 
   const handleDaySelect = async (date: string) => {
     setSelectedDate(date)
@@ -122,9 +108,6 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
     <div className="triptych-container">
       {/* Центральная часть - История и статистика */}
       <main className="center-content">
-        {/* График прогресса упражнений */}
-        <ExerciseChart workouts={allWorkouts} />
-
         {/* Сетка активности */}
         <section className="activity-section">
           <div className="activity-header">
@@ -132,9 +115,6 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
             <div className="header-buttons">
               <button onClick={handleAddWorkoutClick} className="add-workout-btn">
                 ДОБАВИТЬ
-              </button>
-              <button onClick={handleLogout} className="logout-btn" title="Выйти">
-                Выход
               </button>
             </div>
           </div>
@@ -175,9 +155,6 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
 
         {/* Статистика дня */}
         <WorkoutStats workouts={selectedDateWorkouts} selectedDate={selectedDate} />
-
-        {/* Цели */}
-        <GoalsList />
       </main>
 
       {/* Модалка Добавить тренировку */}

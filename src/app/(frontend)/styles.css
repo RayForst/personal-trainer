@@ -17,11 +17,68 @@ body {
 }
 
 :root {
-  --gap: 14px;
+  --gap: 24px;
+  --header-height: 60px;
 }
 
 .home {
   padding: var(--gap);
+}
+
+/* Header */
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-height);
+  background: #ffffff;
+  border-bottom: 1px solid #e9ecef;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.header-container {
+  max-width: 100%;
+  margin: 0 auto;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--gap);
+}
+
+.header-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.nav-btn {
+  padding: 8px 20px;
+  background: transparent;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-btn:hover {
+  background: #f8f9fa;
+  border-color: #dee2e6;
+}
+
+.nav-btn.active {
+  background: #007bff;
+  border-color: #007bff;
+  color: white;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
 }
 
 
@@ -30,7 +87,8 @@ body {
   position: relative;
   display: flex;
   width: 100%;
-  height: calc(100vh - 80px);
+  height: calc(100vh - var(--header-height));
+  margin-top: var(--header-height);
   overflow: hidden;
 }
 
@@ -518,9 +576,9 @@ body {
 }
 
 .legend-square {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
 }
 
 .grid-container {
@@ -529,47 +587,48 @@ body {
   gap: 0.5rem;
   overflow-x: auto;
   padding-bottom: 1rem;
-  width: 100%;
+  /* Не ограничиваем ширину — контент шире контейнера, скроллим */
 }
 
 .grid-months {
   display: grid;
-  grid-template-columns: repeat(53, 1fr);
-  gap: 2px;
+  grid-template-columns: repeat(53, 64px);
+  gap: 3px;
   margin-bottom: 0.5rem;
-  width: 100%;
+  width: max-content;
 }
 
 .month-label {
   font-size: 0.75rem;
   color: #6c757d;
   text-align: left;
-  height: 12px;
-  line-height: 12px;
+  height: 14px;
+  line-height: 14px;
 }
 
 .grid-weeks {
   display: flex;
-  gap: 2px;
-  width: 100%;
+  gap: 3px;
+  width: max-content;
 }
 
 .week {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  flex: 1;
+  gap: 3px;
+  flex-shrink: 0;
 }
 
 .day-square {
-  width: 100%;
-  aspect-ratio: 1;
-  border-radius: 2px;
-  min-width: 8px;
-  min-height: 8px;
+  width: 64px;
+  height: 64px;
+  min-width: 64px;
+  min-height: 64px;
+  border-radius: 3px;
   border: 1px solid transparent;
   transition: all 0.2s ease;
   outline: none;
+  flex-shrink: 0;
 }
 
 .day-square:hover {

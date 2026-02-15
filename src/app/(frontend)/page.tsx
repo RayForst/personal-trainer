@@ -56,9 +56,5 @@ export default async function HomePage() {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 10)
 
-  return (
-    <div className="home">
-      <HomePageComponent initialWorkouts={workouts.docs} recentWorkouts={recentWorkouts} />
-    </div>
-  )
+  return <HomePageComponent initialWorkouts={workouts.docs} recentWorkouts={recentWorkouts} />
 }

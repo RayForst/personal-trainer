@@ -11,6 +11,7 @@ import {
   Tooltip,
   Legend,
   Filler,
+  type TooltipItem,
 } from 'chart.js'
 import { Line } from 'react-chartjs-2'
 import type { Workout } from '@/payload-types'
@@ -340,10 +341,10 @@ export default function ExerciseChart({ workouts }: ExerciseChartProps) {
           padding: 12,
           displayColors: true,
           callbacks: {
-            label: (context: { dataset: { label: string }; parsed: { y: number | null } }) => {
+            label: (context: TooltipItem<'line'>) => {
               const value = context.parsed.y
               if (value === null) return ''
-              return ` ${context.dataset.label}: ${value.toLocaleString()} ${getMetricLabel(currentMetric).split('(')[1]?.replace(')', '') || ''}`
+              return ` ${context.dataset.label || ''}: ${value.toLocaleString()} ${getMetricLabel(currentMetric).split('(')[1]?.replace(')', '') || ''}`
             },
           },
         },

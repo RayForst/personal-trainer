@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useRef, useEffect } from 'react'
 import type { Workout } from '@/payload-types'
 // import Link from 'next/link' - убираем, так как делаем SPA
 
@@ -138,6 +138,16 @@ export default function WorkoutGrid({ workouts, onDaySelect }: WorkoutGridProps)
     return `${day.date}: Пропуск - ${skipReason}`
   }
 
+  const gridContainerRef = useRef<HTMLDivElement>(null)
+
+  // Прокручиваем к правому краю (сегодня) при монтировании
+  useEffect(() => {
+    const container = gridContainerRef.current
+    if (container) {
+      container.scrollLeft = container.scrollWidth
+    }
+  }, [])
+
   return (
     <div className="workout-grid">
       <div className="grid-header">
@@ -160,7 +170,7 @@ export default function WorkoutGrid({ workouts, onDaySelect }: WorkoutGridProps)
         </div>
       </div>
 
-      <div className="grid-container">
+      <div className="grid-container" ref={gridContainerRef}>
         <div className="grid-months">
           {monthPositions.map((month, index) => (
             <div
