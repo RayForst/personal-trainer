@@ -9,12 +9,14 @@ interface WorkoutListProps {
   initialWorkouts: Workout[]
   onWorkoutUpdate?: (updatedWorkout: Workout) => void
   onWorkoutDelete?: (workoutId: string) => void
+  onWorkoutCopy?: (newWorkout: Workout) => void
 }
 
 export default function WorkoutList({
   initialWorkouts,
   onWorkoutUpdate,
   onWorkoutDelete,
+  onWorkoutCopy,
 }: WorkoutListProps) {
   const [workouts, setWorkouts] = useState(initialWorkouts)
 
@@ -52,6 +54,7 @@ export default function WorkoutList({
           workout={workout}
           onDelete={handleDelete}
           onUpdate={handleUpdate}
+          onCopy={onWorkoutCopy}
         />
       ))}
     </div>

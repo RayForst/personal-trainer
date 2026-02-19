@@ -94,6 +94,14 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
     setSelectedDateWorkouts((prev) => prev.filter((workout) => workout.id !== workoutId))
   }
 
+  const handleWorkoutCopy = (newWorkout: Workout) => {
+    setAllWorkouts((prev) => [newWorkout, ...prev])
+    const newDate = new Date(newWorkout.date).toISOString().split('T')[0]
+    if (selectedDate && newDate === selectedDate) {
+      setSelectedDateWorkouts((prev) => [newWorkout, ...prev])
+    }
+  }
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString('ru-RU', {
@@ -142,6 +150,7 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
                     initialWorkouts={selectedDateWorkouts}
                     onWorkoutUpdate={handleWorkoutUpdate}
                     onWorkoutDelete={handleWorkoutDelete}
+                    onWorkoutCopy={handleWorkoutCopy}
                   />
                 </div>
               ) : (

@@ -5,21 +5,26 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import type { Workout } from '@/payload-types'
 import { showToast } from '@/lib/toast'
 import { confirmAction } from '@/app/(frontend)/components/ConfirmDialog'
+import CopyWorkoutModal from './CopyWorkoutModal'
 
 interface EditableWorkoutCardProps {
   workout: Workout
   onDelete: (workoutId: string) => void
   onUpdate: (workoutId: string, updatedWorkout: Workout) => void
+  onCopy?: (newWorkout: Workout) => void
 }
 
 export default function EditableWorkoutCard({
   workout,
   onDelete,
   onUpdate,
+  onCopy,
 }: EditableWorkoutCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editedWorkout, setEditedWorkout] = useState(workout)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isCopyModalOpen, setIsCopyModalOpen] = useState(false)
+  const [isCopying, setIsCopying] = useState(false)
 
   // Функция для расчета тоннажа упражнения
   const calculateExerciseTonnage = (exercise: any) => {
@@ -158,6 +163,55 @@ export default function EditableWorkoutCard({
     setIsEditing(false)
   }
 
+  const handleCopyToDate = async (targetDate: string) => {
+    setIsCopying(true)
+    try {
+      const body = {
+        name: editedWorkout.name,
+        date: targetDate,
+        exercises: (editedWorkout.exercises || []).map((ex) => ({
+          name: ex.name,
+          exerciseType: ex.exerciseType || 'strength',
+          sets: (ex.sets || []).map((set) => ({
+            reps: set.reps ?? '',
+            weight: set.weight ?? '',
+            duration: set.duration ?? '',
+            distance: set.distance ?? '',
+            notes: set.notes ?? '',
+          })),
+        })),
+        duration: editedWorkout.duration ?? undefined,
+        notes: editedWorkout.notes ?? undefined,
+      }
+
+      const response = await fetch('/api/workouts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+
+      if (response.status === 401) {
+        window.location.href = '/login'
+        return
+      }
+
+      if (!response.ok) {
+        showToast.error('Ошибка при копировании тренировки')
+        return
+      }
+
+      const newWorkout = (await response.json()) as Workout
+      showToast.success('Тренировка скопирована!')
+      setIsCopyModalOpen(false)
+      onCopy?.(newWorkout)
+    } catch (error) {
+      console.error('Error copying workout:', error)
+      showToast.error('Ошибка при копировании тренировки')
+    } finally {
+      setIsCopying(false)
+    }
+  }
+
   const addExercise = () => {
     const newExercise = {
       name: '',
@@ -253,6 +307,13 @@ export default function EditableWorkoutCard({
                 title="Редактировать"
               >
                 ✏️
+              </button>
+              <button
+                onClick={() => setIsCopyModalOpen(true)}
+                className="copy-btn icon-only"
+                title="Скопировать на другую дату"
+              >
+                📋
               </button>
               <button
                 onClick={handleDelete}
@@ -705,6 +766,13 @@ export default function EditableWorkoutCard({
           <p>{editedWorkout.notes}</p>
         </div>
       )}
+
+      <CopyWorkoutModal
+        isOpen={isCopyModalOpen}
+        onClose={() => setIsCopyModalOpen(false)}
+        onSave={handleCopyToDate}
+        isSaving={isCopying}
+      />
     </div>
   )
 }

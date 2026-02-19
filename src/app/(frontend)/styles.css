@@ -351,6 +351,19 @@ body {
   min-height: 0;
 }
 
+.copy-workout-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.copy-workout-modal {
+  max-width: 400px;
+}
+
 /* Центральный контент */
 .center-content {
   flex: 1;
@@ -1293,7 +1306,7 @@ body {
   gap: 0.5rem;
 }
 
-.edit-btn, .delete-btn, .save-btn, .cancel-btn {
+.edit-btn, .copy-btn, .delete-btn, .save-btn, .cancel-btn {
   padding: 0.5rem 1rem;
   border: none;
   border-radius: 6px;
@@ -1321,6 +1334,15 @@ body {
 
 .edit-btn:hover {
   background-color: #0056b3;
+}
+
+.copy-btn {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.copy-btn:hover {
+  background-color: #138496;
 }
 
 .delete-btn {
