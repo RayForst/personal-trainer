@@ -116,48 +116,53 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
     <div className="triptych-container">
       {/* Центральная часть - История и статистика */}
       <main className="center-content">
-        {/* Сетка активности */}
-        <section className="activity-section">
-          <div className="activity-header">
-            <h2 style={{ marginBottom: 0 }}>История тренировок</h2>
-            <div className="header-buttons">
-              <button onClick={handleAddWorkoutClick} className="add-workout-btn">
-                ДОБАВИТЬ
-              </button>
-            </div>
-          </div>
-          <WorkoutGrid workouts={allWorkouts} onDaySelect={handleDaySelect} />
-
-          {/* История дня под плиткой */}
-          {selectedDate && (
-            <div className="day-detail-block">
-              <div className="day-detail-header">
-                <h3 className="day-detail-title">
-                  Тренировки за день{' '}
-                  <span className="date-info">({formatDate(selectedDate)})</span>
-                </h3>
-                <button
-                  type="button"
-                  onClick={handleCloseDayDetail}
-                  className="day-detail-close-btn"
-                >
-                  ЗАКРЫТЬ
+        {/* Сетка активности и тренировки за день: при выборе дня — две колонки 50/50 */}
+        <section
+          className={`activity-section${selectedDate ? ' activity-section-split' : ''}`}
+        >
+          <div className="activity-split-left">
+            <div className="activity-header">
+              <h2 style={{ marginBottom: 0 }}>История тренировок</h2>
+              <div className="header-buttons">
+                <button onClick={handleAddWorkoutClick} className="add-workout-btn">
+                  ДОБАВИТЬ
                 </button>
               </div>
-              {selectedDateWorkouts.length > 0 ? (
-                <div className="day-detail-body">
-                  <WorkoutList
-                    initialWorkouts={selectedDateWorkouts}
-                    onWorkoutUpdate={handleWorkoutUpdate}
-                    onWorkoutDelete={handleWorkoutDelete}
-                    onWorkoutCopy={handleWorkoutCopy}
-                  />
+            </div>
+            <WorkoutGrid workouts={allWorkouts} onDaySelect={handleDaySelect} />
+          </div>
+
+          {selectedDate && (
+            <div className="activity-split-right">
+              <div className="day-detail-block">
+                <div className="day-detail-header">
+                  <h3 className="day-detail-title">
+                    Тренировки за день{' '}
+                    <span className="date-info">({formatDate(selectedDate)})</span>
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={handleCloseDayDetail}
+                    className="day-detail-close-btn"
+                  >
+                    ЗАКРЫТЬ
+                  </button>
                 </div>
-              ) : (
-                <div className="day-detail-body day-detail-placeholder">
-                  <p>В этот день тренировок не было</p>
-                </div>
-              )}
+                {selectedDateWorkouts.length > 0 ? (
+                  <div className="day-detail-body">
+                    <WorkoutList
+                      initialWorkouts={selectedDateWorkouts}
+                      onWorkoutUpdate={handleWorkoutUpdate}
+                      onWorkoutDelete={handleWorkoutDelete}
+                      onWorkoutCopy={handleWorkoutCopy}
+                    />
+                  </div>
+                ) : (
+                  <div className="day-detail-body day-detail-placeholder">
+                    <p>В этот день тренировок не было</p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </section>

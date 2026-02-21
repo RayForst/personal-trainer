@@ -495,6 +495,50 @@ body {
   font-weight: normal;
 }
 
+/* Две колонки 50/50 при выборе дня: сетка слева, тренировки за день справа */
+.activity-section-split {
+  display: flex;
+  gap: 1rem;
+  align-items: stretch;
+  min-height: 0;
+  max-height: calc(100vh - var(--header-height) - 180px);
+}
+
+.activity-split-left {
+  flex: 0 0 50%;
+  min-width: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.activity-split-left .activity-header {
+  flex-shrink: 0;
+}
+
+.activity-split-right {
+  flex: 0 0 50%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.activity-split-right .day-detail-block {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.activity-split-right .day-detail-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  max-height: none;
+}
+
 /* Блок статистики */
 .stats-section {
   background: white;
@@ -1746,6 +1790,16 @@ body {
 
 /* Адаптивность */
 @media (max-width: 768px) {
+  .activity-section-split {
+    flex-direction: column;
+    max-height: none;
+  }
+
+  .activity-split-left,
+  .activity-split-right {
+    flex: 1 1 auto;
+  }
+
   .triptych-container {
     height: auto;
     min-height: calc(100vh - 80px);
