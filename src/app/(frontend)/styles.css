@@ -108,6 +108,7 @@ body {
   border: 1px solid var(--color-border-input);
   border-radius: 4px;
   font-size: 1rem;
+  background-color: var(--color-bg-card);
   box-sizing: border-box;
 }
 
@@ -230,6 +231,7 @@ body {
   border: 2px solid var(--color-border);
   border-radius: 8px;
   font-size: 1rem;
+  background-color: var(--color-bg-card);
   transition: border-color 0.2s ease;
 }
 
@@ -257,17 +259,27 @@ body {
 
 .exercise-header input {
   flex: 1;
+  min-height: 2.5rem;
+  background-color: var(--color-bg-card);
 }
 
 .exercise-type {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
   margin-bottom: 1rem;
 }
 
-.exercise-type label {
-  display: block;
-  margin-bottom: 0.5rem;
+.exercise-type > label {
+  margin: 0;
   font-weight: 600;
   color: var(--color-text-body);
+}
+
+.exercise-type .radio-group {
+  display: flex;
+  align-items: center;
 }
 
 .radio-group {
@@ -300,11 +312,13 @@ body {
   background-color: var(--color-danger);
   color: white;
   border: none;
-  padding: 0.5rem 1rem;
+  padding: 0 1rem;
+  min-height: 2.5rem;
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.9rem;
   transition: background-color 0.2s ease;
+  flex-shrink: 0;
 }
 
 .remove-exercise:hover {
@@ -324,6 +338,11 @@ body {
   align-items: center;
 }
 
+.set-row input {
+  min-height: 2.5rem;
+  background-color: var(--color-bg-card);
+}
+
 .set-number {
   font-weight: 600;
   color: var(--color-text-body);
@@ -332,27 +351,28 @@ body {
 
 .set-input-with-fill {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 2px;
 }
 
 .set-input-with-fill input {
   flex: 1;
   min-width: 0;
+  min-height: 2.5rem;
+  background-color: var(--color-bg-card);
 }
 
 .fill-down-btn {
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
+  width: 2.5rem;
+  min-height: 2.5rem;
   padding: 0;
   border: 1px solid var(--color-border-light);
   border-radius: 4px;
-  background: var(--color-bg);
+  background: var(--color-bg-card);
   color: var(--color-text-body);
   cursor: pointer;
   font-size: 1rem;
-  line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -372,8 +392,8 @@ body {
   background-color: var(--color-neutral);
   color: white;
   border: none;
-  width: 30px;
-  height: 30px;
+  width: 2.5rem;
+  min-height: 2.5rem;
   border-radius: 50%;
   cursor: pointer;
   font-size: 1.2rem;
@@ -381,6 +401,7 @@ body {
   align-items: center;
   justify-content: center;
   transition: background-color 0.2s ease;
+  flex-shrink: 0;
 }
 
 .remove-set:hover {
@@ -398,6 +419,7 @@ body {
   font-size: 0.9rem;
   transition: background-color 0.2s ease;
   margin-top: 0.5rem;
+  max-width: 300px;
 }
 
 .add-set:hover,
@@ -436,6 +458,7 @@ body {
   border: 2px solid var(--color-border);
   border-radius: 8px;
   font-size: 1rem;
+  background-color: var(--color-bg-card);
   transition: border-color 0.2s ease;
 }
 
@@ -459,6 +482,8 @@ body {
   border: 2px solid var(--color-border);
   border-radius: 8px;
   font-size: 1rem;
+  min-height: 2.5rem;
+  background-color: var(--color-bg-card);
   transition: border-color 0.2s ease;
 }
 
@@ -604,10 +629,12 @@ body {
 
 .exercise-name-input {
   flex: 1;
+  min-height: 2.5rem;
   padding: 0.5rem;
   border: 1px solid var(--color-border-preview);
   border-radius: 4px;
   font-size: 1rem;
+  background-color: var(--color-bg-card);
 }
 
 .remove-exercise-btn, .remove-set-btn {
@@ -615,14 +642,15 @@ body {
   color: white;
   border: none;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 2.5rem;
+  min-height: 2.5rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1rem;
   line-height: 1;
+  flex-shrink: 0;
 }
 
 .remove-exercise-btn:hover, .remove-set-btn:hover {
@@ -639,21 +667,11 @@ body {
   font-size: 0.9rem;
   margin-top: 0.5rem;
   transition: background-color 0.2s ease;
+  max-width: 300px;
 }
 
 .add-exercise-btn:hover, .add-set-btn:hover {
   background-color: var(--color-success-hover);
-}
-
-.exercise-type {
-  margin-bottom: 1rem;
-}
-
-.exercise-type label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-  color: var(--color-text-body);
 }
 
 .radio-group {

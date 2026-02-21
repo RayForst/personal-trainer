@@ -76,6 +76,9 @@ export interface Config {
     exercises: Exercise;
     'body-state': BodyState;
     'body-fat': BodyFat;
+    debts: Debt;
+    'planned-payments': PlannedPayment;
+    incomes: Income;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -91,6 +94,9 @@ export interface Config {
     exercises: ExercisesSelect<false> | ExercisesSelect<true>;
     'body-state': BodyStateSelect<false> | BodyStateSelect<true>;
     'body-fat': BodyFatSelect<false> | BodyFatSelect<true>;
+    debts: DebtsSelect<false> | DebtsSelect<true>;
+    'planned-payments': PlannedPaymentsSelect<false> | PlannedPaymentsSelect<true>;
+    incomes: IncomesSelect<false> | IncomesSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -333,6 +339,85 @@ export interface BodyFat {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "debts".
+ */
+export interface Debt {
+  id: string;
+  /**
+   * Сумма долга в евро
+   */
+  amount: number;
+  /**
+   * Например: Иван мне, Я Маше
+   */
+  who: string;
+  /**
+   * Уровень важности долга
+   */
+  priority: 'low' | 'normal' | 'high';
+  /**
+   * Когда планируется вернуть долг (опционально)
+   */
+  returnDate?: string | null;
+  /**
+   * Включить, если долг имеет ежемесячные платежи — попадает в обязательный месячный долг
+   */
+  isMonthlyPayment?: boolean | null;
+  /**
+   * Сумма ежемесячного платежа (только когда включён график платежей)
+   */
+  monthlyAmount?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "planned-payments".
+ */
+export interface PlannedPayment {
+  id: string;
+  /**
+   * Например: Spotify, Netflix, спортзал
+   */
+  name: string;
+  /**
+   * Ежемесячная сумма платежа
+   */
+  amount: number;
+  /**
+   * Уровень важности платежа
+   */
+  priority: 'low' | 'normal' | 'high';
+  /**
+   * Опционально: дата списания, ссылка на отмену и т.д.
+   */
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "incomes".
+ */
+export interface Income {
+  id: string;
+  /**
+   * Сумма дохода в месяц
+   */
+  amount: number;
+  /**
+   * Например: Зарплата, Фриланс, Аренда
+   */
+  source: string;
+  /**
+   * День месяца, когда приходит доход (опционально)
+   */
+  receiptDate?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -373,6 +458,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'body-fat';
         value: string | BodyFat;
+      } | null)
+    | ({
+        relationTo: 'debts';
+        value: string | Debt;
+      } | null)
+    | ({
+        relationTo: 'planned-payments';
+        value: string | PlannedPayment;
+      } | null)
+    | ({
+        relationTo: 'incomes';
+        value: string | Income;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -569,6 +666,43 @@ export interface BodyStateSelect<T extends boolean = true> {
 export interface BodyFatSelect<T extends boolean = true> {
   value?: T;
   date?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "debts_select".
+ */
+export interface DebtsSelect<T extends boolean = true> {
+  amount?: T;
+  who?: T;
+  priority?: T;
+  returnDate?: T;
+  isMonthlyPayment?: T;
+  monthlyAmount?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "planned-payments_select".
+ */
+export interface PlannedPaymentsSelect<T extends boolean = true> {
+  name?: T;
+  amount?: T;
+  priority?: T;
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "incomes_select".
+ */
+export interface IncomesSelect<T extends boolean = true> {
+  amount?: T;
+  source?: T;
+  receiptDate?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -22,8 +22,16 @@ export async function GET() {
   try {
     const payload = await getPayload({ config })
 
-    const [exercisesRes, workoutsRes, lastWorkoutRes, lastBodyStateRes, lastBodyFatRes] =
-      await Promise.all([
+    const [
+      exercisesRes,
+      workoutsRes,
+      lastWorkoutRes,
+      lastBodyStateRes,
+      lastBodyFatRes,
+      debtsRes,
+      plannedPaymentsRes,
+      incomesRes,
+    ] = await Promise.all([
         payload.find({
           collection: 'exercises',
           limit: 0,
@@ -53,6 +61,18 @@ export async function GET() {
           collection: 'body-fat',
           limit: 1,
           sort: '-date',
+        }),
+        payload.find({
+          collection: 'debts',
+          limit: 10000,
+        }),
+        payload.find({
+          collection: 'planned-payments',
+          limit: 10000,
+        }),
+        payload.find({
+          collection: 'incomes',
+          limit: 10000,
         }),
       ])
 
@@ -98,6 +118,26 @@ export async function GET() {
     const currentBodyFat =
       lastBodyFat?.value != null ? lastBodyFat.value : null
 
+    const debts = debtsRes.docs as Array<{
+      amount: number
+      isMonthlyPayment?: boolean
+      monthlyAmount?: number | null
+    }>
+    const totalDebt = debts.reduce((sum, d) => sum + (d.amount || 0), 0)
+    const monthlyDebt = debts.reduce((sum, d) => {
+      if (d.isMonthlyPayment && d.monthlyAmount != null) return sum + d.monthlyAmount
+      return sum
+    }, 0)
+
+    const plannedPayments = plannedPaymentsRes.docs as Array<{ amount: number }>
+    const plannedPaymentsNextMonth = plannedPayments.reduce(
+      (sum, p) => sum + (p.amount || 0),
+      0,
+    )
+
+    const incomes = incomesRes.docs as Array<{ amount: number }>
+    const monthlyIncome = incomes.reduce((sum, i) => sum + (i.amount || 0), 0)
+
     return NextResponse.json({
       exercisesCount: exercisesRes.totalDocs,
       workoutsCount: workoutsRes.totalDocs,
@@ -106,6 +146,10 @@ export async function GET() {
       daysSinceLastWorkout,
       currentWeight,
       currentBodyFat,
+      monthlyDebt: Math.round(monthlyDebt * 100) / 100,
+      totalDebt: Math.round(totalDebt * 100) / 100,
+      plannedPaymentsNextMonth: Math.round(plannedPaymentsNextMonth * 100) / 100,
+      monthlyIncome: Math.round(monthlyIncome * 100) / 100,
     })
   } catch (error) {
     console.error('Error fetching stats:', error)

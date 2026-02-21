@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
+import { LogOut } from 'lucide-react'
 
 interface HeaderStats {
   exercisesCount: number
@@ -11,6 +12,10 @@ interface HeaderStats {
   daysSinceLastWorkout: number | null
   currentWeight: number | null
   currentBodyFat: number | null
+  monthlyDebt: number
+  totalDebt: number
+  plannedPaymentsNextMonth: number
+  monthlyIncome: number
 }
 
 function formatVolume(n: number): string {
@@ -54,7 +59,7 @@ export default function Header() {
   const navBtn =
     'px-5 py-2 bg-transparent border border-gray-200 rounded-md text-sm font-medium text-gray-600 cursor-pointer transition-all duration-200 hover:bg-gray-50 hover:border-gray-300'
   const navBtnActive =
-    'bg-blue-600 border-blue-600 text-white hover:bg-blue-600 hover:border-blue-600'
+    'border-green-600 text-green-600 bg-green-50 hover:bg-green-100 hover:border-green-600 hover:text-green-600'
 
   return (
     <header className="fixed top-0 left-0 right-0 h-[var(--header-height)] bg-white border-b border-gray-200 z-[1000] shadow-sm">
@@ -89,6 +94,12 @@ export default function Header() {
             className={`${navBtn} ${pathname === '/state' ? navBtnActive : ''}`}
           >
             Моё состояние
+          </button>
+          <button
+            onClick={() => router.push('/debts')}
+            className={`${navBtn} ${pathname === '/debts' ? navBtnActive : ''}`}
+          >
+            Долги и платежи
           </button>
         </nav>
         {stats && (
@@ -131,15 +142,45 @@ export default function Header() {
                 {stats.currentBodyFat != null ? ` (${stats.currentBodyFat}%)` : ''}
               </span>
             </div>
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-[11px] text-gray-500 font-medium">Месячный долг:</span>
+              <span className="text-[15px] font-bold text-red-600">
+                {((stats.monthlyDebt ?? 0) + (stats.plannedPaymentsNextMonth ?? 0)).toLocaleString('ru-RU', {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                })}{' '}
+                €
+              </span>
+            </div>
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-[11px] text-gray-500 font-medium">Планируемый доход:</span>
+              <span className="text-[15px] font-bold text-green-600">
+                {(stats.monthlyIncome ?? 0).toLocaleString('ru-RU', {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                })}{' '}
+                €
+              </span>
+            </div>
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-[11px] text-gray-500 font-medium">Общий долг:</span>
+              <span className="text-[15px] font-bold text-red-600">
+                {(stats.totalDebt ?? 0).toLocaleString('ru-RU', {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                })}{' '}
+                €
+              </span>
+            </div>
           </div>
         )}
         <div className="flex gap-3">
           <button
             onClick={handleLogout}
-            className="py-2 px-4 rounded border border-gray-500 bg-transparent text-gray-600 text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-gray-600 hover:text-white hover:border-gray-600"
+            className="p-2 rounded border border-gray-300 bg-transparent text-gray-600 cursor-pointer transition-all duration-200 hover:bg-gray-100 hover:border-gray-400"
             title="Выйти"
           >
-            Выход
+            <LogOut className="w-5 h-5" strokeWidth={2} />
           </button>
         </div>
       </div>
