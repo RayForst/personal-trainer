@@ -122,7 +122,9 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
         >
           <div className="activity-split-left">
             <div className="activity-header">
-              <h2 style={{ marginBottom: 0 }}>История тренировок</h2>
+              <h2 className="mb-0 bg-blue-500 text-white text-[0.5rem] md:bg-transparent md:text-[#2c3e50] md:text-2xl">
+                История тренировок
+              </h2>
               <div className="header-buttons">
                 <button onClick={handleAddWorkoutClick} className="add-workout-btn">
                   ДОБАВИТЬ
