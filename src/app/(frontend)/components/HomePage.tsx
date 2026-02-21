@@ -116,15 +116,15 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
     <div className="triptych-container">
       {/* Центральная часть - История и статистика */}
       <main className="center-content">
-        {/* Сетка активности и тренировки за день: при выборе дня — две колонки 50/50 */}
+        {/* Сетка активности и тренировки за день: при выборе дня — две колонки 50/50 с плавной анимацией */}
         <section
-          className={`activity-section${selectedDate ? ' activity-section-split' : ''}`}
+          className={`activity-section flex flex-col md:flex-row gap-4 items-stretch min-h-0 overflow-hidden ${selectedDate ? 'md:max-h-[calc(100vh-var(--header-height)-180px)]' : ''}`}
         >
-          <div className="activity-split-left">
-            <div className="activity-header">
-              <h2 className="mb-0 bg-blue-500 text-white text-[0.5rem] md:bg-transparent md:text-[#2c3e50] md:text-2xl">
-                История тренировок
-              </h2>
+          <div
+            className={`min-w-0 flex flex-col overflow-y-auto shrink-0 transition-[flex-basis] duration-300 ease-out ${selectedDate ? 'basis-full md:basis-1/2' : 'basis-full'}`}
+          >
+            <div className="activity-header shrink-0">
+              <h2 style={{ marginBottom: 0 }}>История тренировок</h2>
               <div className="header-buttons">
                 <button onClick={handleAddWorkoutClick} className="add-workout-btn">
                   ДОБАВИТЬ
@@ -134,9 +134,11 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
             <WorkoutGrid workouts={allWorkouts} onDaySelect={handleDaySelect} />
           </div>
 
-          {selectedDate && (
-            <div className="activity-split-right">
-              <div className="day-detail-block">
+          <div
+            className={`min-w-0 overflow-hidden flex flex-col transition-[flex-basis] duration-300 ease-out ${selectedDate ? 'basis-full md:basis-1/2' : 'basis-0'}`}
+          >
+            {selectedDate && (
+              <div className="day-detail-block flex flex-col flex-1 min-h-0 overflow-hidden">
                 <div className="day-detail-header">
                   <h3 className="day-detail-title">
                     Тренировки за день{' '}
@@ -151,7 +153,7 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
                   </button>
                 </div>
                 {selectedDateWorkouts.length > 0 ? (
-                  <div className="day-detail-body">
+                  <div className="day-detail-body flex-1 min-h-0 overflow-y-auto max-h-none">
                     <WorkoutList
                       initialWorkouts={selectedDateWorkouts}
                       onWorkoutUpdate={handleWorkoutUpdate}
@@ -160,13 +162,13 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
                     />
                   </div>
                 ) : (
-                  <div className="day-detail-body day-detail-placeholder">
+                  <div className="day-detail-body day-detail-placeholder flex-1 min-h-0 overflow-y-auto max-h-none">
                     <p>В этот день тренировок не было</p>
                   </div>
                 )}
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </section>
 
         {/* Статистика дня */}
