@@ -175,6 +175,30 @@ export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormP
     }))
   }
 
+  /** Заполнить значением из текущей строки все подходы ниже (в рамках одного упражнения) */
+  const fillDownSetField = (
+    exerciseIndex: number,
+    setIndex: number,
+    field: 'reps' | 'weight' | 'duration' | 'distance',
+  ) => {
+    const exercise = formData.exercises[exerciseIndex]
+    if (!exercise || setIndex >= exercise.sets.length - 1) return
+    const value = exercise.sets[setIndex][field] || ''
+    setFormData((prev) => ({
+      ...prev,
+      exercises: prev.exercises.map((ex, i) =>
+        i === exerciseIndex
+          ? {
+              ...ex,
+              sets: ex.sets.map((set, j) =>
+                j > setIndex ? { ...set, [field]: value } : set,
+              ),
+            }
+          : ex,
+      ),
+    }))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
@@ -490,56 +514,112 @@ export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormP
 
                                   {exercise.exerciseType === 'strength' ? (
                                     <>
-                                      <input
-                                        type="text"
-                                        placeholder="Повторения"
-                                        value={set.reps}
-                                        onChange={(e) =>
-                                          updateSet(exerciseIndex, setIndex, 'reps', e.target.value)
-                                        }
-                                      />
-                                      <input
-                                        type="text"
-                                        placeholder="Вес (кг)"
-                                        value={set.weight}
-                                        onChange={(e) =>
-                                          updateSet(
-                                            exerciseIndex,
-                                            setIndex,
-                                            'weight',
-                                            e.target.value,
-                                          )
-                                        }
-                                      />
+                                      <div className="set-input-with-fill">
+                                        <input
+                                          type="text"
+                                          placeholder="Повторения"
+                                          value={set.reps}
+                                          onChange={(e) =>
+                                            updateSet(exerciseIndex, setIndex, 'reps', e.target.value)
+                                          }
+                                        />
+                                        <button
+                                          type="button"
+                                          className="fill-down-btn"
+                                          onClick={() =>
+                                            fillDownSetField(exerciseIndex, setIndex, 'reps')
+                                          }
+                                          title="Заполнить вниз"
+                                        >
+                                          <span aria-hidden>↓</span>
+                                        </button>
+                                      </div>
+                                      <div className="set-input-with-fill">
+                                        <input
+                                          type="text"
+                                          placeholder="Вес (кг)"
+                                          value={set.weight}
+                                          onChange={(e) =>
+                                            updateSet(
+                                              exerciseIndex,
+                                              setIndex,
+                                              'weight',
+                                              e.target.value,
+                                            )
+                                          }
+                                        />
+                                        <button
+                                          type="button"
+                                          className="fill-down-btn"
+                                          onClick={() =>
+                                            fillDownSetField(exerciseIndex, setIndex, 'weight')
+                                          }
+                                          title="Заполнить вниз"
+                                        >
+                                          <span aria-hidden>↓</span>
+                                        </button>
+                                      </div>
                                     </>
                                   ) : (
                                     <>
-                                      <input
-                                        type="text"
-                                        placeholder="Время (мин:сек)"
-                                        value={set.duration}
-                                        onChange={(e) =>
-                                          updateSet(
-                                            exerciseIndex,
-                                            setIndex,
-                                            'duration',
-                                            e.target.value,
-                                          )
-                                        }
-                                      />
-                                      <input
-                                        type="text"
-                                        placeholder="Дистанция (км)"
-                                        value={set.distance}
-                                        onChange={(e) =>
-                                          updateSet(
-                                            exerciseIndex,
-                                            setIndex,
-                                            'distance',
-                                            e.target.value,
-                                          )
-                                        }
-                                      />
+                                      <div className="set-input-with-fill">
+                                        <input
+                                          type="text"
+                                          placeholder="Время (мин:сек)"
+                                          value={set.duration}
+                                          onChange={(e) =>
+                                            updateSet(
+                                              exerciseIndex,
+                                              setIndex,
+                                              'duration',
+                                              e.target.value,
+                                            )
+                                          }
+                                        />
+                                        <button
+                                          type="button"
+                                          className="fill-down-btn"
+                                          onClick={() =>
+                                            fillDownSetField(
+                                              exerciseIndex,
+                                              setIndex,
+                                              'duration',
+                                            )
+                                          }
+                                          title="Заполнить вниз"
+                                        >
+                                          <span aria-hidden>↓</span>
+                                        </button>
+                                      </div>
+                                      <div className="set-input-with-fill">
+                                        <input
+                                          type="text"
+                                          placeholder="Дистанция (км)"
+                                          value={set.distance}
+                                          onChange={(e) =>
+                                            updateSet(
+                                              exerciseIndex,
+                                              setIndex,
+                                              'distance',
+                                              e.target.value,
+                                            )
+                                          }
+                                        />
+                                        <button
+                                          type="button"
+                                          className="fill-down-btn"
+                                          onClick={() =>
+                                            fillDownSetField(
+                                              exerciseIndex,
+                                              setIndex,
+                                              'distance',
+                                            )
+                                          }
+                                          title="Заполнить вниз"
+                                        >
+                                          <span aria-hidden>↓</span>
+                                        </button>
+                                      </div>
                                     </>
                                   )}
 
