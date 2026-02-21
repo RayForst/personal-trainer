@@ -143,8 +143,9 @@ export default function Header() {
               </span>
             </div>
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-[11px] text-gray-500 font-medium">Месячный долг:</span>
+              <span className="text-[11px] text-gray-500 font-medium">Месячный расход:</span>
               <span className="text-[15px] font-bold text-red-600">
+                −{' '}
                 {((stats.monthlyDebt ?? 0) + (stats.plannedPaymentsNextMonth ?? 0)).toLocaleString('ru-RU', {
                   minimumFractionDigits: 0,
                   maximumFractionDigits: 0,
@@ -153,8 +154,9 @@ export default function Header() {
               </span>
             </div>
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-[11px] text-gray-500 font-medium">Планируемый доход:</span>
+              <span className="text-[11px] text-gray-500 font-medium">Месячный доход:</span>
               <span className="text-[15px] font-bold text-green-600">
+                +{' '}
                 {(stats.monthlyIncome ?? 0).toLocaleString('ru-RU', {
                   minimumFractionDigits: 0,
                   maximumFractionDigits: 0,

@@ -804,7 +804,7 @@ export default function DebtsPage() {
                       .sort((a, b) => PRIORITY_ORDER[(a.priority || 'normal') as PaymentPriority] - PRIORITY_ORDER[(b.priority || 'normal') as PaymentPriority])
                       .map((p) => (
                       <tr key={p.id}>
-                        <td className="font-medium text-red-600">{formatAmount(p.amount)} €</td>
+                        <td className="font-medium text-red-600">−{formatAmount(p.amount)} €</td>
                         <td>{p.name}</td>
                         <td>
                           <span className="inline-flex items-center gap-1.5">
@@ -859,21 +859,21 @@ export default function DebtsPage() {
                   {' + '}
                   <span className="text-orange-600">{formatAmount(plannedPaymentsTotal)} €</span>
                   {' = '}
-                  <span className="text-red-600">{formatAmount(monthlyDebt + plannedPaymentsTotal)} €</span>
+                  <span className="text-red-600">−{formatAmount(monthlyDebt + plannedPaymentsTotal)} €</span>
                 </span>
                 <span className="text-xs text-gray-500">долги + подписки, сервисы</span>
               </div>
               <div className="flex flex-col gap-0.5">
                 <span className="text-[11px] text-gray-500 font-medium">Планируемый доход в месяц</span>
                 <span className="text-[18px] font-bold text-green-600">
-                  {formatAmount(monthlyIncomeTotal)} €
+                  +{formatAmount(monthlyIncomeTotal)} €
                 </span>
                 <span className="text-xs text-gray-500">регулярные доходы</span>
               </div>
               <div className="flex flex-col gap-0.5">
                 <span className="text-[11px] text-gray-500 font-medium">Общий долг</span>
                 <span className="text-[18px] font-bold text-red-600">
-                  {formatAmount(totalDebt)} €
+                  −{formatAmount(totalDebt)} €
                 </span>
               </div>
             </div>
