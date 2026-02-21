@@ -1,11 +1,37 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
+
+interface HeaderStats {
+  exercisesCount: number
+  workoutsCount: number
+  maxWeight: number
+  totalVolume: number
+  daysSinceLastWorkout: number | null
+}
+
+function formatVolume(n: number): string {
+  return n.toLocaleString('ru-RU').replace(/\s/g, ' ')
+}
 
 export default function Header() {
   const router = useRouter()
   const pathname = usePathname()
+  const [stats, setStats] = useState<HeaderStats | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/stats')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data) setStats(data)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const handleLogout = async () => {
     try {
@@ -52,6 +78,38 @@ export default function Header() {
             Упражнения
           </button>
         </nav>
+        {stats && (
+          <div className="header-stats">
+            <div className="header-stat">
+              <span className="header-stat-label">Упражнений:</span>
+              <span className="header-stat-value">{stats.exercisesCount}</span>
+            </div>
+            <div className="header-stat">
+              <span className="header-stat-label">Тренировок:</span>
+              <span className="header-stat-value">{stats.workoutsCount}</span>
+            </div>
+            <div className="header-stat">
+              <span className="header-stat-label">Лучший вес:</span>
+              <span className="header-stat-value">{stats.maxWeight} кг</span>
+            </div>
+            <div className="header-stat">
+              <span className="header-stat-label">Общий объём:</span>
+              <span className="header-stat-value">{formatVolume(stats.totalVolume)} кг</span>
+            </div>
+            <div className="header-stat">
+              <span className="header-stat-label">Последняя тренировка:</span>
+              <span className="header-stat-value">
+                {stats.daysSinceLastWorkout === null
+                  ? '—'
+                  : stats.daysSinceLastWorkout === 0
+                    ? 'сегодня'
+                    : stats.daysSinceLastWorkout === 1
+                      ? 'вчера'
+                      : `${stats.daysSinceLastWorkout} дн. назад`}
+              </span>
+            </div>
+          </div>
+        )}
         <div className="header-actions">
           <button onClick={handleLogout} className="logout-btn" title="Выйти">
             Выход

@@ -392,39 +392,6 @@ export default function ExerciseChart({ workouts }: ExerciseChartProps) {
     [currentMetric],
   )
 
-  // Статистика
-  const stats = useMemo(() => {
-    if (exercisesToShow.length === 0) return null
-
-    let totalWorkouts = 0
-    let bestWeight = 0
-    let totalVolume = 0
-    let totalDuration = 0
-    let totalDistance = 0
-
-    exercisesToShow.forEach((exercise) => {
-      const data = exerciseDataMap.get(exercise.name)
-      if (data) {
-        totalWorkouts += data.size
-        data.forEach((point) => {
-          bestWeight = Math.max(bestWeight, point.maxWeight)
-          totalVolume += point.totalVolume
-          totalDuration += point.totalDuration
-          totalDistance += point.totalDistance
-        })
-      }
-    })
-
-    return {
-      exercises: exercisesToShow.length,
-      workouts: totalWorkouts,
-      bestWeight,
-      totalVolume,
-      totalDuration: Math.round(totalDuration),
-      totalDistance: totalDistance.toFixed(1),
-    }
-  }, [exercisesToShow, exerciseDataMap])
-
   if (exerciseInfo.length === 0) {
     return (
       <section className="chart-section">
@@ -518,45 +485,6 @@ export default function ExerciseChart({ workouts }: ExerciseChartProps) {
       ) : (
         <div className="chart-placeholder">
           <p>Нет данных для отображения</p>
-        </div>
-      )}
-
-      {stats && (
-        <div className="chart-summary">
-          {selectedExercise === '__all__' && (
-            <div className="summary-item">
-              <span className="summary-label">Упражнений:</span>
-              <span className="summary-value">{stats.exercises}</span>
-            </div>
-          )}
-          <div className="summary-item">
-            <span className="summary-label">Тренировок:</span>
-            <span className="summary-value">{stats.workouts}</span>
-          </div>
-          {isStrength && stats.bestWeight > 0 && (
-            <>
-              <div className="summary-item">
-                <span className="summary-label">Лучший вес:</span>
-                <span className="summary-value">{stats.bestWeight} кг</span>
-              </div>
-              <div className="summary-item">
-                <span className="summary-label">Общий объём:</span>
-                <span className="summary-value">{stats.totalVolume.toLocaleString()} кг</span>
-              </div>
-            </>
-          )}
-          {!isStrength && stats.totalDuration > 0 && (
-            <>
-              <div className="summary-item">
-                <span className="summary-label">Общее время:</span>
-                <span className="summary-value">{stats.totalDuration} мин</span>
-              </div>
-              <div className="summary-item">
-                <span className="summary-label">Общая дистанция:</span>
-                <span className="summary-value">{stats.totalDistance} км</span>
-              </div>
-            </>
-          )}
         </div>
       )}
     </section>

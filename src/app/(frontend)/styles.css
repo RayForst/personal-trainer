@@ -76,6 +76,33 @@ body {
   color: white;
 }
 
+.header-stats {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex: 1;
+  justify-content: center;
+}
+
+.header-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.header-stat-label {
+  font-size: 11px;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.header-stat-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: #343a40;
+}
+
 .header-actions {
   display: flex;
   gap: 12px;
