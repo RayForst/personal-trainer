@@ -228,63 +228,81 @@ export default function EditGoalModal({ goal, isOpen, onClose, onUpdate }: EditG
     setRemoveImage(false)
   }
 
+  const formGroup = 'flex flex-col gap-2'
+  const formLabel = 'font-semibold text-gray-600 text-sm'
+  const formInput =
+    'py-3 px-3 border-2 border-gray-200 rounded-lg text-base transition-colors focus:outline-none focus:border-blue-600 focus:shadow-[0_0_0_3px_rgba(0,123,255,0.1)]'
+
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Редактировать цель</h2>
-          <button onClick={onClose} className="close-btn">
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-xl w-full max-w-[600px] max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-center p-6 border-b border-gray-200 shrink-0">
+          <h2 className="m-0 text-gray-800 text-2xl">Редактировать цель</h2>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-red-600 text-white border-none cursor-pointer flex items-center justify-center text-xl leading-none transition-colors hover:bg-red-700 shrink-0"
+          >
             ×
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="modal-form">
-          <div className="form-group">
-            <label htmlFor="edit-goal-name">Название цели:</label>
+        <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-6">
+          <div className={formGroup}>
+            <label htmlFor="edit-goal-name" className={formLabel}>Название цели:</label>
             <input
               type="text"
               id="edit-goal-name"
               value={formData.name}
               onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+              className={formInput}
               required
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="edit-goal-date">Дата:</label>
+          <div className={formGroup}>
+            <label htmlFor="edit-goal-date" className={formLabel}>Дата:</label>
             <input
               type="date"
               id="edit-goal-date"
               value={formData.date}
               onChange={(e) => setFormData((prev) => ({ ...prev, date: e.target.value }))}
+              className={formInput}
               required
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="edit-goal-end-date">Дата завершения (опционально):</label>
+          <div className={formGroup}>
+            <label htmlFor="edit-goal-end-date" className={formLabel}>Дата завершения (опционально):</label>
             <input
               type="date"
               id="edit-goal-end-date"
               value={formData.endDate}
               onChange={(e) => setFormData((prev) => ({ ...prev, endDate: e.target.value }))}
               min={formData.date}
+              className={formInput}
             />
-            <small className="form-help">Дата, когда цель была завершена</small>
+            <small className="block mt-1 text-sm text-gray-500 italic">Дата, когда цель была завершена</small>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="edit-goal-unit">Единица измерения (опционально):</label>
+          <div className={formGroup}>
+            <label htmlFor="edit-goal-unit" className={formLabel}>Единица измерения (опционально):</label>
             <input
               type="text"
               id="edit-goal-unit"
               value={formData.unit}
               onChange={(e) => setFormData((prev) => ({ ...prev, unit: e.target.value }))}
+              className={formInput}
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="edit-activity-value">Последнее значение активности:</label>
+          <div className={formGroup}>
+            <label htmlFor="edit-activity-value" className={formLabel}>Последнее значение активности:</label>
             <input
               type="number"
               id="edit-activity-value"
@@ -292,31 +310,33 @@ export default function EditGoalModal({ goal, isOpen, onClose, onUpdate }: EditG
               value={activityValue}
               onChange={(e) => setActivityValue(e.target.value)}
               placeholder="Введите значение"
+              className={formInput}
             />
             <input
               type="date"
               value={activityDate}
               onChange={(e) => setActivityDate(e.target.value)}
-              style={{ marginTop: '0.5rem', width: '100%' }}
+              className={`${formInput} mt-2 w-full`}
             />
-            <small className="form-help">
+            <small className="block mt-1 text-sm text-gray-500 italic">
               Значение активности за указанную дату. Это НЕ изменяет глобальную цель, только запись
               активности.
             </small>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="edit-goal-notes">Заметки:</label>
+          <div className={formGroup}>
+            <label htmlFor="edit-goal-notes" className={formLabel}>Заметки:</label>
             <textarea
               id="edit-goal-notes"
               value={formData.notes}
               onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
               rows={3}
+              className={formInput}
             />
           </div>
 
-          <div className="form-group">
-            <label>Изображение для фона:</label>
+          <div className={formGroup}>
+            <label className={formLabel}>Изображение для фона:</label>
             {currentImageUrl && !removeImage && (
               <div style={{ marginBottom: '0.5rem' }}>
                 <img
@@ -347,25 +367,33 @@ export default function EditGoalModal({ goal, isOpen, onClose, onUpdate }: EditG
               </div>
             )}
             <input type="file" id="edit-goal-image" accept="image/*" onChange={handleImageChange} />
-            <small className="form-help">
+            <small className="block mt-1 text-sm text-gray-500 italic">
               Оставьте пустым, чтобы сохранить текущее изображение
             </small>
           </div>
 
-          <div className="modal-actions">
+          <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
             <button
               type="button"
               onClick={handleDelete}
               disabled={isDeleting}
-              className="delete-btn"
+              className="py-3 px-6 bg-red-600 text-white border-none rounded-md text-base font-medium cursor-pointer transition-colors hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isDeleting ? 'Удаление...' : 'Удалить цель'}
             </button>
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <button type="button" onClick={onClose} className="cancel-btn">
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="py-3 px-6 bg-gray-500 text-white border-none rounded-md text-base font-medium cursor-pointer transition-colors hover:bg-gray-600"
+              >
                 Отмена
               </button>
-              <button type="submit" disabled={isSubmitting} className="submit-btn">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="py-3 px-6 bg-blue-600 text-white border-none rounded-md text-base font-medium cursor-pointer transition-colors hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
                 {isSubmitting ? 'Сохранение...' : 'Сохранить'}
               </button>
             </div>

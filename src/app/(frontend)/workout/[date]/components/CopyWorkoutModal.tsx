@@ -43,43 +43,55 @@ export default function CopyWorkoutModal({
 
   return (
     <div
-      className="add-workout-modal-overlay copy-workout-modal-overlay"
+      className="add-workout-modal-overlay fixed inset-0 bg-black/45 z-[1000] flex items-center justify-center p-4"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="copy-workout-modal-title"
     >
       <div
-        className="add-workout-modal copy-workout-modal"
+        className="add-workout-modal bg-white rounded-xl shadow-2xl w-full max-w-[400px] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="add-workout-modal-header">
-          <h2 id="copy-workout-modal-title">Скопировать тренировку на другую дату</h2>
+        <div className="flex justify-between items-center py-5 px-6 border-b border-gray-200 shrink-0">
+          <h2 id="copy-workout-modal-title" className="m-0 text-xl text-gray-800">
+            Скопировать тренировку на другую дату
+          </h2>
           <button
             type="button"
             onClick={onClose}
-            className="add-workout-modal-close"
+            className="bg-transparent border-none text-2xl leading-none text-gray-500 cursor-pointer p-1 -m-1 rounded hover:bg-gray-100 hover:text-gray-800 transition-colors"
             aria-label="Закрыть"
           >
             ×
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="add-workout-modal-body">
-          <div className="form-group">
-            <label htmlFor="copy-workout-date">Выберите дату:</label>
+        <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="copy-workout-date" className="font-semibold text-gray-600 text-sm">
+              Выберите дату:
+            </label>
             <input
               id="copy-workout-date"
               type="date"
               value={targetDate}
               onChange={(e) => setTargetDate(e.target.value)}
-              className="workout-date-input"
+              className="py-2 px-3 border border-gray-300 rounded-md text-base w-full focus:outline-none focus:border-blue-600 focus:shadow-[0_0_0_2px_rgba(0,123,255,0.25)]"
             />
           </div>
-          <div className="copy-workout-modal-actions">
-            <button type="button" onClick={onClose} className="cancel-btn">
+          <div className="flex gap-3 justify-end mt-5 pt-4 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={onClose}
+              className="py-3 px-6 bg-gray-500 text-white border-none rounded-md text-base font-medium cursor-pointer transition-colors hover:bg-gray-600"
+            >
               Отмена
             </button>
-            <button type="submit" className="save-btn" disabled={isSaving}>
+            <button
+              type="submit"
+              className="py-3 px-6 bg-green-600 text-white border-none rounded-md text-base font-medium cursor-pointer transition-colors hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled={isSaving}
+            >
               {isSaving ? 'Сохранение...' : 'Сохранить'}
             </button>
           </div>

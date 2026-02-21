@@ -113,20 +113,23 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
   }
 
   return (
-    <div className="triptych-container">
+    <div className="triptych-container relative flex w-full h-[calc(100vh-var(--header-height))] mt-[var(--header-height)] overflow-hidden">
       {/* Центральная часть - История и статистика */}
-      <main className="center-content">
+      <main className="center-content flex-1 flex flex-col gap-6 p-6 overflow-y-auto min-w-0 w-full transition-[margin] duration-300 ease-in-out">
         {/* Сетка активности и тренировки за день: при выборе дня — две колонки 50/50 с плавной анимацией */}
         <section
-          className={`activity-section flex flex-col md:flex-row gap-4 items-stretch min-h-0 overflow-hidden ${selectedDate ? 'md:max-h-[calc(100vh-var(--header-height)-180px)]' : ''}`}
+          className={`bg-white rounded-xl p-8 shadow-sm flex flex-col md:flex-row gap-4 items-stretch min-h-0 overflow-hidden ${selectedDate ? 'md:max-h-[calc(100vh-var(--header-height)-180px)]' : ''}`}
         >
           <div
             className={`min-w-0 flex flex-col overflow-y-auto shrink-0 transition-[flex-basis] duration-300 ease-out ${selectedDate ? 'basis-full md:basis-1/2' : 'basis-full'}`}
           >
-            <div className="activity-header shrink-0">
-              <h2 style={{ marginBottom: 0 }}>История тренировок</h2>
-              <div className="header-buttons">
-                <button onClick={handleAddWorkoutClick} className="add-workout-btn">
+            <div className="flex justify-between items-center mb-6 flex-wrap gap-4 shrink-0">
+              <h2 className="m-0">История тренировок</h2>
+              <div className="flex gap-4 items-center">
+                <button
+                  onClick={handleAddWorkoutClick}
+                  className="border border-green-600 text-green-600 px-4 py-2 rounded text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-green-600 hover:text-white"
+                >
                   ДОБАВИТЬ
                 </button>
               </div>
@@ -138,22 +141,24 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
             className={`min-w-0 overflow-hidden flex flex-col transition-[flex-basis] duration-300 ease-out ${selectedDate ? 'basis-full md:basis-1/2' : 'basis-0'}`}
           >
             {selectedDate && (
-              <div className="day-detail-block flex flex-col flex-1 min-h-0 overflow-hidden">
-                <div className="day-detail-header">
-                  <h3 className="day-detail-title">
+              <div className="border border-gray-200 border-b-0 rounded-t-lg bg-white overflow-hidden flex flex-col flex-1 min-h-0">
+                <div className="flex items-center justify-between gap-4 py-3 px-4 bg-gray-50 border-b border-gray-200">
+                  <h3 className="m-0 text-base font-semibold text-gray-900">
                     Тренировки за день{' '}
-                    <span className="date-info">({formatDate(selectedDate)})</span>
+                    <span className="text-sm text-gray-500 font-normal">
+                      ({formatDate(selectedDate)})
+                    </span>
                   </h3>
                   <button
                     type="button"
                     onClick={handleCloseDayDetail}
-                    className="day-detail-close-btn"
+                    className="py-1.5 px-3 text-sm font-semibold text-gray-600 bg-white border border-gray-300 rounded-md cursor-pointer transition-colors hover:bg-gray-100 hover:border-gray-400"
                   >
                     ЗАКРЫТЬ
                   </button>
                 </div>
                 {selectedDateWorkouts.length > 0 ? (
-                  <div className="day-detail-body flex-1 min-h-0 overflow-y-auto max-h-none">
+                  <div className="p-4 flex-1 min-h-0 overflow-y-auto max-h-none">
                     <WorkoutList
                       initialWorkouts={selectedDateWorkouts}
                       onWorkoutUpdate={handleWorkoutUpdate}
@@ -162,8 +167,8 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
                     />
                   </div>
                 ) : (
-                  <div className="day-detail-body day-detail-placeholder flex-1 min-h-0 overflow-y-auto max-h-none">
-                    <p>В этот день тренировок не было</p>
+                  <div className="p-4 text-gray-500 text-[0.95rem] flex-1 min-h-0 overflow-y-auto max-h-none">
+                    <p className="m-0">В этот день тренировок не было</p>
                   </div>
                 )}
               </div>
@@ -178,25 +183,30 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
       {/* Модалка Добавить тренировку */}
       {isAddModalOpen && (
         <div
-          className="add-workout-modal-overlay"
+          className="add-workout-modal-overlay fixed inset-0 bg-black/45 z-[1000] flex items-center justify-center p-4"
           onClick={handleCloseAddModal}
           role="dialog"
           aria-modal="true"
           aria-labelledby="add-workout-modal-title"
         >
-          <div className="add-workout-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="add-workout-modal-header">
-              <h2 id="add-workout-modal-title">Добавить тренировку</h2>
+          <div
+            className="add-workout-modal bg-white rounded-xl shadow-2xl w-full max-w-[1080px] max-h-[calc(100vh-2rem)] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center py-5 px-6 border-b border-gray-200 shrink-0">
+              <h2 id="add-workout-modal-title" className="m-0 text-xl text-gray-800">
+                Добавить тренировку
+              </h2>
               <button
                 type="button"
                 onClick={handleCloseAddModal}
-                className="add-workout-modal-close"
+                className="bg-transparent border-none text-2xl leading-none text-gray-500 cursor-pointer p-1 -m-1 rounded hover:bg-gray-100 hover:text-gray-800 transition-colors"
                 aria-label="Закрыть"
               >
                 ×
               </button>
             </div>
-            <div className="add-workout-modal-body">
+            <div className="flex-1 overflow-y-auto p-6 min-h-0">
               <AddWorkoutForm
                 templates={recentWorkouts}
                 onSuccess={() => {

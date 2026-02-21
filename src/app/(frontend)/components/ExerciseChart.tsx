@@ -394,12 +394,12 @@ export default function ExerciseChart({ workouts }: ExerciseChartProps) {
 
   if (exerciseInfo.length === 0) {
     return (
-      <section className="chart-section">
-        <h2>
-          Прогресс упражнений<sup>Последний год</sup>
+      <section className="bg-white rounded-xl p-6 shadow-sm">
+        <h2 className="m-0 mb-6 text-2xl text-gray-800">
+          Прогресс упражнений<sup className="text-sm text-gray-500 ml-1 font-normal">Последний год</sup>
         </h2>
-        <div className="chart-placeholder">
-          <p>Добавьте тренировки с упражнениями для отображения графика прогресса</p>
+        <div className="text-center text-gray-500 py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+          <p className="m-0">Добавьте тренировки с упражнениями для отображения графика прогресса</p>
         </div>
       </section>
     )
@@ -409,19 +409,21 @@ export default function ExerciseChart({ workouts }: ExerciseChartProps) {
   const cardioExercises = exerciseInfo.filter((e) => e.type === 'cardio')
 
   return (
-    <section className="chart-section">
-      <h2>
-        Прогресс упражнений<sup>Последний год</sup>
+    <section className="bg-white rounded-xl p-6 shadow-sm">
+      <h2 className="m-0 mb-6 text-2xl text-gray-800">
+        Прогресс упражнений<sup className="text-sm text-gray-500 ml-1 font-normal">Последний год</sup>
       </h2>
 
-      <div className="chart-controls">
-        <div className="control-group">
-          <label htmlFor="exercise-select">Упражнение:</label>
+      <div className="flex gap-6 mb-6 flex-wrap">
+        <div className="flex flex-col gap-2 min-w-[200px]">
+          <label htmlFor="exercise-select" className="font-semibold text-gray-600 text-sm">
+            Упражнение:
+          </label>
           <select
             id="exercise-select"
             value={selectedExercise}
             onChange={(e) => setSelectedExercise(e.target.value)}
-            className="chart-select"
+            className="py-3 px-3 border-2 border-gray-200 rounded-lg text-base bg-white cursor-pointer transition-colors focus:outline-none focus:border-blue-600 focus:shadow-[0_0_0_3px_rgba(0,123,255,0.1)]"
           >
             <option value="__all__">— Все упражнения —</option>
             {strengthExercises.length > 0 && (
@@ -446,13 +448,15 @@ export default function ExerciseChart({ workouts }: ExerciseChartProps) {
         </div>
 
         {isStrength && (
-          <div className="control-group">
-            <label htmlFor="metric-select">Метрика:</label>
+          <div className="flex flex-col gap-2 min-w-[200px]">
+            <label htmlFor="metric-select" className="font-semibold text-gray-600 text-sm">
+              Метрика:
+            </label>
             <select
               id="metric-select"
               value={metricType}
               onChange={(e) => setMetricType(e.target.value as MetricType)}
-              className="chart-select"
+              className="py-3 px-3 border-2 border-gray-200 rounded-lg text-base bg-white cursor-pointer transition-colors focus:outline-none focus:border-blue-600 focus:shadow-[0_0_0_3px_rgba(0,123,255,0.1)]"
             >
               <option value="maxWeight">Макс. вес</option>
               <option value="avgWeight">Средний вес</option>
@@ -463,13 +467,15 @@ export default function ExerciseChart({ workouts }: ExerciseChartProps) {
         )}
 
         {!isStrength && (
-          <div className="control-group">
-            <label htmlFor="cardio-metric-select">Метрика:</label>
+          <div className="flex flex-col gap-2 min-w-[200px]">
+            <label htmlFor="cardio-metric-select" className="font-semibold text-gray-600 text-sm">
+              Метрика:
+            </label>
             <select
               id="cardio-metric-select"
               value={cardioMetric}
               onChange={(e) => setCardioMetric(e.target.value as CardioMetricType)}
-              className="chart-select"
+              className="py-3 px-3 border-2 border-gray-200 rounded-lg text-base bg-white cursor-pointer transition-colors focus:outline-none focus:border-blue-600 focus:shadow-[0_0_0_3px_rgba(0,123,255,0.1)]"
             >
               <option value="totalDuration">Время</option>
               <option value="totalDistance">Дистанция</option>
@@ -479,12 +485,12 @@ export default function ExerciseChart({ workouts }: ExerciseChartProps) {
       </div>
 
       {chartConfig.datasets.length > 0 && chartLabels.length > 0 ? (
-        <div className="chart-container" style={{ height: '450px' }}>
+        <div className="w-full mb-6" style={{ height: '450px' }}>
           <Line data={chartConfig} options={chartOptions} />
         </div>
       ) : (
-        <div className="chart-placeholder">
-          <p>Нет данных для отображения</p>
+        <div className="text-center text-gray-500 py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+          <p className="m-0">Нет данных для отображения</p>
         </div>
       )}
     </section>

@@ -167,72 +167,77 @@ export default function WorkoutStats({ workouts, selectedDate }: WorkoutStatsPro
   const hasWorkouts = workouts.length > 0
   const hasGoals = goals.length > 0
 
+  const statCard =
+    'w-40 h-40 flex flex-col justify-center rounded-lg p-4 text-center border border-gray-200 bg-gray-50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md'
+  const statCardPrimary =
+    'w-40 h-40 flex flex-col justify-center rounded-lg p-4 text-center border-none bg-gradient-to-br from-indigo-500 to-purple-600 text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md'
+
   if (!selectedDate || (!hasWorkouts && !hasGoals)) {
     return (
-      <section className="stats-section">
-        <h2>Статистика дня</h2>
-        <div className="stats-placeholder">
-          <p>Выберите день с тренировками или целями для просмотра статистики</p>
+      <section className="bg-white rounded-xl p-6 shadow-sm">
+        <h2 className="m-0 mb-6 text-2xl text-gray-800">Статистика дня</h2>
+        <div className="text-center text-gray-500 py-8">
+          <p className="m-0">Выберите день с тренировками или целями для просмотра статистики</p>
         </div>
       </section>
     )
   }
 
   return (
-    <section className="stats-section">
-      <h2>
-        Статистика дня <span className="date-info">({formatDate(selectedDate)})</span>
+    <section className="bg-white rounded-xl p-6 shadow-sm">
+      <h2 className="m-0 mb-6 text-2xl text-gray-800">
+        Статистика дня <span className="text-sm text-gray-500 font-normal">({formatDate(selectedDate)})</span>
       </h2>
-      <div className="stats-grid">
-        <div className="stat-card primary">
-          <div className="stat-value">{stats.totalTonnage.toLocaleString()}</div>
-          <div className="stat-label">кг общий тоннаж</div>
+      <div className="flex flex-wrap gap-2">
+        <div className={statCardPrimary}>
+          <div className="text-2xl font-bold mb-2">{stats.totalTonnage.toLocaleString()}</div>
+          <div className="text-sm opacity-80">кг общий тоннаж</div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-value">{stats.totalSets}</div>
-          <div className="stat-label">подходов</div>
+        <div className={statCard}>
+          <div className="text-2xl font-bold mb-2">{stats.totalSets}</div>
+          <div className="text-sm text-gray-600 opacity-80">подходов</div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-value">{stats.totalReps}</div>
-          <div className="stat-label">повторений</div>
+        <div className={statCard}>
+          <div className="text-2xl font-bold mb-2">{stats.totalReps}</div>
+          <div className="text-sm text-gray-600 opacity-80">повторений</div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-value">{stats.exerciseCount}</div>
-          <div className="stat-label">упражнений</div>
+        <div className={statCard}>
+          <div className="text-2xl font-bold mb-2">{stats.exerciseCount}</div>
+          <div className="text-sm text-gray-600 opacity-80">упражнений</div>
         </div>
 
         {stats.maxWeight > 0 && (
-          <div className="stat-card">
-            <div className="stat-value">{stats.maxWeight}</div>
-            <div className="stat-label">кг макс. вес</div>
+          <div className={statCard}>
+            <div className="text-2xl font-bold mb-2">{stats.maxWeight}</div>
+            <div className="text-sm text-gray-600 opacity-80">кг макс. вес</div>
           </div>
         )}
 
         {stats.maxReps > 0 && (
-          <div className="stat-card">
-            <div className="stat-value">{stats.maxReps}</div>
-            <div className="stat-label">макс. повторов</div>
+          <div className={statCard}>
+            <div className="text-2xl font-bold mb-2">{stats.maxReps}</div>
+            <div className="text-sm text-gray-600 opacity-80">макс. повторов</div>
           </div>
         )}
 
         {stats.totalDuration > 0 && (
-          <div className="stat-card">
-            <div className="stat-value">{formatDuration(stats.totalDuration)}</div>
-            <div className="stat-label">кардио</div>
+          <div className={statCard}>
+            <div className="text-2xl font-bold mb-2">{formatDuration(stats.totalDuration)}</div>
+            <div className="text-sm text-gray-600 opacity-80">кардио</div>
           </div>
         )}
 
-        <div className="stat-card">
-          <div className="stat-value">{stats.strengthExercises}</div>
-          <div className="stat-label">силовых</div>
+        <div className={statCard}>
+          <div className="text-2xl font-bold mb-2">{stats.strengthExercises}</div>
+          <div className="text-sm text-gray-600 opacity-80">силовых</div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-value">{stats.cardioExercises}</div>
-          <div className="stat-label">кардио</div>
+        <div className={statCard}>
+          <div className="text-2xl font-bold mb-2">{stats.cardioExercises}</div>
+          <div className="text-sm text-gray-600 opacity-80">кардио</div>
         </div>
 
         {/* Отображение целей */}
@@ -261,46 +266,27 @@ export default function WorkoutStats({ workouts, selectedDate }: WorkoutStatsPro
           return (
             <div
               key={goal.id}
-              className="stat-card"
-              style={{ ...cardStyle, cursor: 'pointer' }}
+              className={`${statCard} cursor-pointer relative`}
+              style={cardStyle}
               onClick={() => {
                 setSelectedGoal(goal)
                 setIsGoalModalOpen(true)
               }}
             >
               {imageUrl && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background:
-                      'linear-gradient(135deg, rgb(102 126 234 / 32%) 0%, rgb(118 75 162 / 24%) 100%)',
-                    borderRadius: '8px',
-                    zIndex: 0,
-                  }}
-                />
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/30 to-purple-600/25 rounded-lg z-0" />
               )}
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                <div className="stat-value">
+              <div className="relative z-10">
+                <div className="text-2xl font-bold mb-2">
                   {goal.activityValue !== null && goal.activityValue !== undefined
                     ? goal.activityValue.toLocaleString()
                     : '—'}
                   {goal.unit && goal.unit.toLowerCase().trim() !== 'секунд' && ` ${goal.unit}`}
                 </div>
-                <div className="stat-label">{goal.name}</div>
+                <div className="text-sm opacity-80">{goal.name}</div>
               </div>
               {goal.endDate && (
-                <div
-                  style={{
-                    fontSize: '1rem',
-                    marginTop: '1rem',
-                    fontWeight: 'bold',
-                    opacity: 0.8,
-                  }}
-                >
+                <div className="text-base font-bold mt-4 opacity-80">
                   {new Date(goal.endDate).toLocaleDateString('ru-RU')}
                 </div>
               )}

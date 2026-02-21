@@ -37,9 +37,12 @@ export default function WorkoutList({
 
   if (workouts.length === 0) {
     return (
-      <div className="no-workouts">
-        <p>В этот день тренировок не было</p>
-        <Link href="/" className="add-workout-link">
+      <div className="text-center py-12 bg-white rounded-xl shadow-sm">
+        <p className="text-lg text-gray-500 mb-6 m-0">В этот день тренировок не было</p>
+        <Link
+          href="/"
+          className="inline-block py-3 px-6 bg-blue-600 text-white no-underline rounded-lg font-medium transition-colors hover:bg-blue-700"
+        >
           Добавить тренировку
         </Link>
       </div>
@@ -47,7 +50,7 @@ export default function WorkoutList({
   }
 
   return (
-    <div className="workouts-list">
+    <div className="flex flex-col gap-2.5">
       {workouts.map((workout) => (
         <EditableWorkoutCard
           key={workout.id}

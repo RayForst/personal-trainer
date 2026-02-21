@@ -48,7 +48,7 @@ export default function LoginPage() {
         <h1>Дневник тренировок</h1>
         <p className="login-subtitle">Войдите для доступа к дашборду</p>
         <form onSubmit={handleSubmit} className="login-form">
-          <div className="form-group">
+          <div className="form-group flex flex-col gap-2">
             <label htmlFor="username">Имя пользователя</label>
             <input
               id="username"
@@ -60,7 +60,7 @@ export default function LoginPage() {
               disabled={isLoading}
             />
           </div>
-          <div className="form-group">
+          <div className="form-group flex flex-col gap-2">
             <label htmlFor="password">Пароль</label>
             <input
               id="password"

@@ -51,62 +51,69 @@ export default function Header() {
     return null
   }
 
+  const navBtn =
+    'px-5 py-2 bg-transparent border border-gray-200 rounded-md text-sm font-medium text-gray-600 cursor-pointer transition-all duration-200 hover:bg-gray-50 hover:border-gray-300'
+  const navBtnActive =
+    'bg-blue-600 border-blue-600 text-white hover:bg-blue-600 hover:border-blue-600'
+
   return (
-    <header className="app-header">
-      <div className="header-container">
-        <nav className="header-nav">
+    <header className="fixed top-0 left-0 right-0 h-[var(--header-height)] bg-white border-b border-gray-200 z-[1000] shadow-sm">
+      <div className="max-w-full mx-auto h-full flex items-center justify-between px-6">
+        <nav className="flex gap-2">
           <button
             onClick={() => router.push('/')}
-            className={`nav-btn ${pathname === '/' ? 'active' : ''}`}
+            className={`${navBtn} ${pathname === '/' ? navBtnActive : ''}`}
           >
             История
           </button>
           <button
             onClick={() => router.push('/progress')}
-            className={`nav-btn ${pathname === '/progress' ? 'active' : ''}`}
+            className={`${navBtn} ${pathname === '/progress' ? navBtnActive : ''}`}
           >
             Прогресс
           </button>
           <button
             onClick={() => router.push('/goals')}
-            className={`nav-btn ${pathname === '/goals' ? 'active' : ''}`}
+            className={`${navBtn} ${pathname === '/goals' ? navBtnActive : ''}`}
           >
             Цели
           </button>
           <button
             onClick={() => router.push('/exercises')}
-            className={`nav-btn ${pathname === '/exercises' ? 'active' : ''}`}
+            className={`${navBtn} ${pathname === '/exercises' ? navBtnActive : ''}`}
           >
             Упражнения
           </button>
           <button
             onClick={() => router.push('/state')}
-            className={`nav-btn ${pathname === '/state' ? 'active' : ''}`}
+            className={`${navBtn} ${pathname === '/state' ? navBtnActive : ''}`}
           >
             Моё состояние
           </button>
         </nav>
         {stats && (
-          <div className="header-stats">
-            <div className="header-stat">
-              <span className="header-stat-label">Упражнений:</span>
-              <span className="header-stat-value">{stats.exercisesCount}</span>
+          <div className="flex items-center gap-5 flex-1 justify-center">
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-[11px] text-gray-500 font-medium">Упражнений:</span>
+              <span className="text-[15px] font-bold text-gray-800">{stats.exercisesCount}</span>
             </div>
-            <div className="header-stat">
-              <span className="header-stat-label">Тренировок:</span>
-              <span className="header-stat-value">{stats.workoutsCount}</span>
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-[11px] text-gray-500 font-medium">Тренировок:</span>
+              <span className="text-[15px] font-bold text-gray-800">{stats.workoutsCount}</span>
             </div>
-            <div className="header-stat">
-              <span className="header-stat-label">Лучший вес:</span>
-              <span className="header-stat-value">{stats.maxWeight} кг</span>
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-[11px] text-gray-500 font-medium">Лучший вес:</span>
+              <span className="text-[15px] font-bold text-gray-800">{stats.maxWeight} кг</span>
             </div>
-            <div className="header-stat">
-              <span className="header-stat-label">Общий объём:</span>
-              <span className="header-stat-value">{formatVolume(stats.totalVolume)} кг</span>
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-[11px] text-gray-500 font-medium">Общий объём:</span>
+              <span className="text-[15px] font-bold text-gray-800">
+                {formatVolume(stats.totalVolume)} кг
+              </span>
             </div>
-            <div className="header-stat">
-              <span className="header-stat-label">Последняя тренировка:</span>
-              <span className="header-stat-value">
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-[11px] text-gray-500 font-medium">Последняя тренировка:</span>
+              <span className="text-[15px] font-bold text-gray-800">
                 {stats.daysSinceLastWorkout === null
                   ? '—'
                   : stats.daysSinceLastWorkout === 0
@@ -116,20 +123,22 @@ export default function Header() {
                       : `${stats.daysSinceLastWorkout} дн. назад`}
               </span>
             </div>
-            <div className="header-stat">
-              <span className="header-stat-label">Текущий вес:</span>
-              <span className="header-stat-value">
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-[11px] text-gray-500 font-medium">Текущий вес:</span>
+              <span className="text-[15px] font-bold text-gray-800">
                 {stats.currentWeight != null ? stats.currentWeight : '—'}
                 {' кг'}
-                {stats.currentBodyFat != null
-                  ? ` (${stats.currentBodyFat}%)`
-                  : ''}
+                {stats.currentBodyFat != null ? ` (${stats.currentBodyFat}%)` : ''}
               </span>
             </div>
           </div>
         )}
-        <div className="header-actions">
-          <button onClick={handleLogout} className="logout-btn" title="Выйти">
+        <div className="flex gap-3">
+          <button
+            onClick={handleLogout}
+            className="py-2 px-4 rounded border border-gray-500 bg-transparent text-gray-600 text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-gray-600 hover:text-white hover:border-gray-600"
+            title="Выйти"
+          >
             Выход
           </button>
         </div>

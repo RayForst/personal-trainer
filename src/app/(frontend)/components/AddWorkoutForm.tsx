@@ -357,7 +357,7 @@ export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormP
   }
 
   return (
-    <div className="add-workout-form-container">
+    <div className="w-full">
       {/* Табы */}
       <div className="form-tabs">
         <button
@@ -386,7 +386,7 @@ export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormP
       {/* Контент табов */}
       {activeTab === 'workout' ? (
         <form onSubmit={handleSubmit} className="add-workout-form">
-          <div className="form-group">
+          <div className="form-group flex flex-col gap-2">
             <label htmlFor="name">Название тренировки:</label>
             <input
               type="text"
@@ -398,7 +398,7 @@ export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormP
             />
           </div>
 
-          <div className="form-group">
+          <div className="form-group flex flex-col gap-2">
             <label htmlFor="template">Повторить предыдущую тренировку:</label>
             <select
               id="template"
@@ -412,13 +412,13 @@ export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormP
                 </option>
               ))}
             </select>
-            <small className="form-help">
+            <small className="block mt-1 text-sm text-[var(--color-text-muted)] italic">
               Выберите предыдущую тренировку, чтобы повторить упражнения, или добавьте упражнения
               вручную ниже
             </small>
           </div>
 
-          <div className="form-group">
+          <div className="form-group flex flex-col gap-2">
             <label htmlFor="date">Дата тренировки:</label>
             <input
               type="date"
@@ -429,7 +429,7 @@ export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormP
             />
           </div>
 
-          <div className="form-group">
+          <div className="form-group flex flex-col gap-2">
             <label>Упражнения:</label>
             <DragDropContext onDragEnd={handleDragEnd}>
               <Droppable droppableId="exercises">
@@ -663,7 +663,7 @@ export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormP
             </button>
           </div>
 
-          <div className="form-group">
+          <div className="form-group flex flex-col gap-2">
             <label htmlFor="duration">Длительность тренировки (минуты):</label>
             <input
               type="number"
@@ -673,7 +673,7 @@ export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormP
             />
           </div>
 
-          <div className="form-group">
+          <div className="form-group flex flex-col gap-2">
             <label htmlFor="notes">Заметки:</label>
             <textarea
               id="notes"
@@ -689,7 +689,7 @@ export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormP
         </form>
       ) : activeTab === 'skip' ? (
         <form onSubmit={handleSkipSubmit} className="add-workout-form">
-          <div className="form-group">
+          <div className="form-group flex flex-col gap-2">
             <label htmlFor="skip-date">Дата начала пропуска:</label>
             <input
               type="date"
@@ -700,7 +700,7 @@ export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormP
             />
           </div>
 
-          <div className="form-group">
+          <div className="form-group flex flex-col gap-2">
             <label htmlFor="skip-end-date">Дата окончания пропуска (опционально):</label>
             <input
               type="date"
@@ -709,10 +709,10 @@ export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormP
               onChange={(e) => setSkipData((prev) => ({ ...prev, endDate: e.target.value }))}
               min={skipData.date}
             />
-            <small className="form-help">Оставьте пустым для пропуска одного дня</small>
+            <small className="block mt-1 text-sm text-[var(--color-text-muted)] italic">Оставьте пустым для пропуска одного дня</small>
           </div>
 
-          <div className="form-group">
+          <div className="form-group flex flex-col gap-2">
             <label htmlFor="skip-reason">Причина пропуска:</label>
             <select
               id="skip-reason"
@@ -734,7 +734,7 @@ export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormP
           </div>
 
           {skipData.reason === 'other' && (
-            <div className="form-group">
+            <div className="form-group flex flex-col gap-2">
               <label htmlFor="custom-reason">Укажите причину:</label>
               <input
                 type="text"
@@ -747,7 +747,7 @@ export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormP
             </div>
           )}
 
-          <div className="form-group">
+          <div className="form-group flex flex-col gap-2">
             <label>Цвет для отображения:</label>
             <div className="color-options">
               <label className="color-option">
@@ -755,12 +755,13 @@ export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormP
                   type="radio"
                   name="skip-color"
                   value="blue"
+                  className="m-0"
                   checked={skipData.color === 'blue'}
                   onChange={(e) =>
                     setSkipData((prev) => ({ ...prev, color: e.target.value as any }))
                   }
                 />
-                <span className="color-preview blue"></span>
+                <span className="color-preview w-5 h-5 rounded border border-[var(--color-border-preview)] bg-[var(--color-primary)]"></span>
                 <span>Синий</span>
               </label>
               <label className="color-option">
@@ -768,12 +769,13 @@ export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormP
                   type="radio"
                   name="skip-color"
                   value="red"
+                  className="m-0"
                   checked={skipData.color === 'red'}
                   onChange={(e) =>
                     setSkipData((prev) => ({ ...prev, color: e.target.value as any }))
                   }
                 />
-                <span className="color-preview red"></span>
+                <span className="color-preview w-5 h-5 rounded border border-[var(--color-border-preview)] bg-[var(--color-danger)]"></span>
                 <span>Красный</span>
               </label>
               <label className="color-option">
@@ -781,12 +783,13 @@ export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormP
                   type="radio"
                   name="skip-color"
                   value="orange"
+                  className="m-0"
                   checked={skipData.color === 'orange'}
                   onChange={(e) =>
                     setSkipData((prev) => ({ ...prev, color: e.target.value as any }))
                   }
                 />
-                <span className="color-preview orange"></span>
+                <span className="color-preview w-5 h-5 rounded border border-[var(--color-border-preview)] bg-[var(--color-warning)]"></span>
                 <span>Оранжевый</span>
               </label>
               <label className="color-option">
@@ -794,18 +797,19 @@ export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormP
                   type="radio"
                   name="skip-color"
                   value="yellow"
+                  className="m-0"
                   checked={skipData.color === 'yellow'}
                   onChange={(e) =>
                     setSkipData((prev) => ({ ...prev, color: e.target.value as any }))
                   }
                 />
-                <span className="color-preview yellow"></span>
+                <span className="color-preview w-5 h-5 rounded border border-[var(--color-border-preview)] bg-[var(--color-warning-light)]"></span>
                 <span>Желтый</span>
               </label>
             </div>
           </div>
 
-          <div className="form-group">
+          <div className="form-group flex flex-col gap-2">
             <label htmlFor="skip-notes">Заметки:</label>
             <textarea
               id="skip-notes"
@@ -822,7 +826,7 @@ export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormP
         </form>
       ) : activeTab === 'goal' ? (
         <form onSubmit={handleGoalSubmit} className="add-workout-form">
-          <div className="form-group">
+          <div className="form-group flex flex-col gap-2">
             <label htmlFor="goal-name">Название цели:</label>
             <input
               type="text"
@@ -832,10 +836,10 @@ export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormP
               onChange={(e) => setGoalData((prev) => ({ ...prev, name: e.target.value }))}
               required
             />
-            <small className="form-help">Название цели, которую вы хотите отслеживать</small>
+            <small className="block mt-1 text-sm text-[var(--color-text-muted)] italic">Название цели, которую вы хотите отслеживать</small>
           </div>
 
-          <div className="form-group">
+          <div className="form-group flex flex-col gap-2">
             <label htmlFor="goal-date">Дата:</label>
             <input
               type="date"
@@ -846,7 +850,7 @@ export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormP
             />
           </div>
 
-          <div className="form-group">
+          <div className="form-group flex flex-col gap-2">
             <label htmlFor="goal-end-date">Дата завершения (опционально):</label>
             <input
               type="date"
@@ -855,12 +859,12 @@ export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormP
               onChange={(e) => setGoalData((prev) => ({ ...prev, endDate: e.target.value }))}
               min={goalData.date}
             />
-            <small className="form-help">
+            <small className="block mt-1 text-sm text-[var(--color-text-muted)] italic">
               Дата, когда цель была завершена
             </small>
           </div>
 
-          <div className="form-group">
+          <div className="form-group flex flex-col gap-2">
             <label htmlFor="goal-unit">Единица измерения (опционально):</label>
             <input
               type="text"
@@ -869,10 +873,10 @@ export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormP
               value={goalData.unit}
               onChange={(e) => setGoalData((prev) => ({ ...prev, unit: e.target.value }))}
             />
-            <small className="form-help">Единица измерения для лучшего понимания значения</small>
+            <small className="block mt-1 text-sm text-[var(--color-text-muted)] italic">Единица измерения для лучшего понимания значения</small>
           </div>
 
-          <div className="form-group">
+          <div className="form-group flex flex-col gap-2">
             <label htmlFor="goal-notes">Заметки:</label>
             <textarea
               id="goal-notes"
@@ -883,7 +887,7 @@ export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormP
             />
           </div>
 
-          <div className="form-group">
+          <div className="form-group flex flex-col gap-2">
             <label htmlFor="goal-image">Изображение для фона (опционально):</label>
             <input
               type="file"
@@ -894,7 +898,7 @@ export default function AddWorkoutForm({ templates, onSuccess }: AddWorkoutFormP
                 setGoalData((prev) => ({ ...prev, image: file }))
               }}
             />
-            <small className="form-help">
+            <small className="block mt-1 text-sm text-[var(--color-text-muted)] italic">
               Изображение будет использоваться как фон карточки цели в статистике
             </small>
             {goalData.image && (

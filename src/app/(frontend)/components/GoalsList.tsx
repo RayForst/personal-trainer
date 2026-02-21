@@ -139,12 +139,15 @@ export default function GoalsList() {
     return new Date(b.latestDate).getTime() - new Date(a.latestDate).getTime()
   })
 
+  const statCard =
+    'w-40 h-40 flex flex-col justify-center rounded-lg p-4 text-center border border-gray-200 bg-gray-50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md'
+
   if (loading) {
     return (
-      <section className="stats-section">
-        <h2>Цели</h2>
-        <div className="stats-placeholder">
-          <p>Загрузка целей...</p>
+      <section className="bg-white rounded-xl p-6 shadow-sm">
+        <h2 className="m-0 mb-6 text-2xl text-gray-800">Цели</h2>
+        <div className="text-center text-gray-500 py-8">
+          <p className="m-0">Загрузка целей...</p>
         </div>
       </section>
     )
@@ -152,19 +155,19 @@ export default function GoalsList() {
 
   if (goalGroups.length === 0) {
     return (
-      <section className="stats-section">
-        <h2>Цели</h2>
-        <div className="stats-placeholder">
-          <p>У вас пока нет целей. Добавьте первую цель через форму добавления!</p>
+      <section className="bg-white rounded-xl p-6 shadow-sm">
+        <h2 className="m-0 mb-6 text-2xl text-gray-800">Цели</h2>
+        <div className="text-center text-gray-500 py-8">
+          <p className="m-0">У вас пока нет целей. Добавьте первую цель через форму добавления!</p>
         </div>
       </section>
     )
   }
 
   return (
-    <section className="stats-section">
-      <h2>Цели</h2>
-      <div className="stats-grid">
+    <section className="bg-white rounded-xl p-6 shadow-sm">
+      <h2 className="m-0 mb-6 text-2xl text-gray-800">Цели</h2>
+      <div className="flex flex-wrap gap-2">
         {goalGroups.map((goalGroup, index) => {
           // Получаем URL изображения
           const imageUrl =
@@ -190,36 +193,24 @@ export default function GoalsList() {
           return (
             <div
               key={`${goalGroup.name}-${index}`}
-              className="stat-card"
-              style={{ ...cardStyle, cursor: 'pointer' }}
+              className={`${statCard} cursor-pointer relative`}
+              style={cardStyle}
               onClick={() => handleGoalClick(goalGroup)}
             >
               {imageUrl && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background:
-                      'linear-gradient(135deg, rgb(102 126 234 / 32%) 0%, rgb(118 75 162 / 24%) 100%)',
-                    borderRadius: '8px',
-                    zIndex: 0,
-                  }}
-                />
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/30 to-purple-600/25 rounded-lg z-0" />
               )}
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                <div className="stat-value">
+              <div className="relative z-10">
+                <div className="text-2xl font-bold mb-2">
                   {goalGroup.latestValue.toLocaleString()}
                   {goalGroup.unit &&
                     goalGroup.unit.toLowerCase().trim() !== 'секунд' &&
                     ` ${goalGroup.unit}`}
                 </div>
-                <div className="stat-label">{goalGroup.name}</div>
+                <div className="text-sm opacity-80">{goalGroup.name}</div>
               </div>
               {goalGroup.latestEndDate && (
-                <div className="stat-date">
+                <div className="text-xs font-bold text-white p-1 absolute bottom-0 left-0 right-0 w-full bg-black/50 rounded-b-lg">
                   {new Date(goalGroup.latestEndDate).toLocaleDateString('ru-RU')}
                 </div>
               )}

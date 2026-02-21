@@ -51,12 +51,15 @@ export default async function WorkoutDayPage({ params }: PageProps) {
   }
 
   return (
-    <div className="workout-day-page">
-      <div className="header">
-        <Link href="/" className="back-link">
+    <div className="min-h-screen py-8 px-8 max-w-[800px] mx-auto">
+      <div className="text-left mb-8 pb-4 border-b-2 border-gray-200">
+        <Link
+          href="/"
+          className="text-blue-600 no-underline font-medium mb-4 inline-block transition-colors hover:text-blue-700 hover:underline"
+        >
           ← Назад к дневнику
         </Link>
-        <h1>Тренировки за {formatDate(date)}</h1>
+        <h1 className="text-3xl m-0 text-gray-800">Тренировки за {formatDate(date)}</h1>
       </div>
 
       <WorkoutList initialWorkouts={workouts.docs} />

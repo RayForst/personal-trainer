@@ -149,18 +149,17 @@ export default function WorkoutGrid({ workouts, onDaySelect }: WorkoutGridProps)
   }, [])
 
   return (
-    <div className="workout-grid">
-      <div className="grid-header">
-        <div className="grid-legend">
+    <div className="w-full">
+      <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
+        <div className="flex items-center gap-2 text-sm text-gray-500">
           <span>Меньше</span>
-          <div className="legend-squares">
+          <div className="flex gap-0.5">
             {[0, 1, 2, 3, 4].map((level) => {
-              // Создаем массив тренировок для каждого уровня
               const mockWorkouts = Array(level).fill({ isSkip: false })
               return (
                 <div
                   key={level}
-                  className="legend-square"
+                  className="w-4 h-4 rounded-sm"
                   style={{ backgroundColor: getIntensityColor(mockWorkouts) }}
                 />
               )
@@ -170,28 +169,29 @@ export default function WorkoutGrid({ workouts, onDaySelect }: WorkoutGridProps)
         </div>
       </div>
 
-      <div className="grid-container" ref={gridContainerRef}>
-        <div className="grid-months">
+      <div className="flex flex-col gap-2 overflow-x-auto pb-4" ref={gridContainerRef}>
+        <div
+          className="grid gap-[3px] mb-2 w-max"
+          style={{ gridTemplateColumns: 'repeat(53, 64px)' }}
+        >
           {monthPositions.map((month, index) => (
             <div
               key={`${month.name}-${index}`}
-              className="month-label"
-              style={{
-                gridColumn: month.weekIndex + 1,
-              }}
+              className="text-xs text-gray-500 text-left h-3.5 leading-[14px]"
+              style={{ gridColumn: month.weekIndex + 1 }}
             >
               {month.name}
             </div>
           ))}
         </div>
 
-        <div className="grid-weeks">
+        <div className="flex gap-[3px] w-max">
           {weeks.map((week, weekIndex) => (
-            <div key={weekIndex} className="week">
+            <div key={weekIndex} className="flex flex-col gap-[3px] shrink-0">
               {week.map((day, dayIndex) => (
                 <div
                   key={`${day.date}-${dayIndex}`}
-                  className="day-square"
+                  className="w-16 h-16 min-w-16 min-h-16 rounded-sm border border-transparent transition-all duration-200 outline-none shrink-0 cursor-pointer hover:shadow-[inset_0_0_0_2px_#dc3545]"
                   style={{
                     backgroundColor: getIntensityColor(day.workouts),
                     border: `1px solid ${getSkipBorderColor(day.workouts) ?? 'transparent'}`,

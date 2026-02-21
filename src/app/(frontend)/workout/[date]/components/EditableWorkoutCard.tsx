@@ -1,7 +1,19 @@
 'use client'
 
 import React, { useState } from 'react'
+import { motion } from 'framer-motion'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
+import {
+  Pencil,
+  Copy,
+  Trash2,
+  Save,
+  X,
+  Loader2,
+  Clock,
+  ChevronRight,
+  ChevronDown,
+} from 'lucide-react'
 import type { Workout } from '@/payload-types'
 import { showToast } from '@/lib/toast'
 import { confirmAction } from '@/app/(frontend)/components/ConfirmDialog'
@@ -21,10 +33,14 @@ export default function EditableWorkoutCard({
   onCopy,
 }: EditableWorkoutCardProps) {
   const [isEditing, setIsEditing] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
   const [editedWorkout, setEditedWorkout] = useState(workout)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false)
   const [isCopying, setIsCopying] = useState(false)
+
+  const hasExpandableContent =
+    (editedWorkout.exercises?.length ?? 0) > 0 || !!editedWorkout.notes
 
   // Функция для расчета тоннажа упражнения
   const calculateExerciseTonnage = (exercise: any) => {
@@ -293,44 +309,71 @@ export default function EditableWorkoutCard({
     })
   }
 
+  const isCollapsed = !isEditing && !isExpanded && hasExpandableContent
+
   return (
-    <div className="workout-card">
-      <div className="workout-header">
-        <h2>{editedWorkout.name}</h2>
-        <div className="workout-actions">
-          {workout.duration && <span className="duration">⏱️ {workout.duration} мин</span>}
+    <div
+      className={`workout-card ${!isEditing ? '!pt-3' : ''} ${isCollapsed ? '!pb-3' : ''}`}
+    >
+      <div className={`workout-header ${isCollapsed ? '!mb-0 !pb-0' : ''}`}>
+        {!isEditing && hasExpandableContent ? (
+          <button
+            type="button"
+            className="flex items-center gap-2 flex-1 min-w-0 p-0 m-0 border-0 bg-transparent cursor-pointer text-left font-inherit hover:opacity-85 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:outline-offset-2 focus-visible:rounded-sm"
+            onClick={() => setIsExpanded((e) => !e)}
+            aria-expanded={isExpanded}
+          >
+            <span className="shrink-0 w-5 h-5 text-gray-600 inline-flex items-center justify-center" aria-hidden>
+              {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+            </span>
+            <h2>{editedWorkout.name}</h2>
+          </button>
+        ) : (
+          <h2>{editedWorkout.name}</h2>
+        )}
+        <div className="flex flex-col items-start gap-2 md:flex-row md:items-center md:gap-4">
+          {workout.duration && (
+            <span className="inline-flex items-center gap-1.5 bg-gray-200 text-gray-600 px-2.5 py-1.5 rounded-full text-sm font-medium">
+              <Clock size={14} strokeWidth={2} aria-hidden />
+              <span>{workout.duration} мин</span>
+            </span>
+          )}
           {!isEditing ? (
-            <div className="action-buttons">
+            <div className="flex gap-2">
               <button
                 onClick={() => setIsEditing(true)}
-                className="edit-btn icon-only"
+                className="flex items-center justify-center w-9 h-9 rounded-md bg-gray-100 border border-gray-200 text-blue-600 hover:bg-blue-50 hover:border-blue-100 transition-colors"
                 title="Редактировать"
               >
-                ✏️
+                <Pencil size={18} strokeWidth={2} aria-hidden />
               </button>
               <button
                 onClick={() => setIsCopyModalOpen(true)}
-                className="copy-btn icon-only"
+                className="flex items-center justify-center w-9 h-9 rounded-md bg-gray-100 border border-gray-200 text-cyan-500 hover:bg-cyan-50 hover:border-cyan-100 transition-colors"
                 title="Скопировать на другую дату"
               >
-                📋
+                <Copy size={18} strokeWidth={2} aria-hidden />
               </button>
               <button
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="delete-btn icon-only"
+                className="flex items-center justify-center w-9 h-9 rounded-md bg-gray-100 border border-gray-200 text-red-500 hover:bg-red-50 hover:border-red-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
                 title={isDeleting ? 'Удаление...' : 'Удалить'}
               >
-                {isDeleting ? '⏳' : '🗑️'}
+                {isDeleting ? (
+                  <Loader2 size={18} strokeWidth={2} className="animate-spin" aria-hidden />
+                ) : (
+                  <Trash2 size={18} strokeWidth={2} aria-hidden />
+                )}
               </button>
             </div>
           ) : (
-            <div className="action-buttons">
-              <button onClick={handleSave} className="save-btn icon-only" title="Сохранить">
-                💾
+            <div className="flex gap-2">
+              <button onClick={handleSave} className="flex items-center justify-center w-9 h-9 rounded-md bg-gray-100 border border-gray-200 text-green-600 hover:bg-green-50 hover:border-green-100 transition-colors" title="Сохранить">
+                <Save size={18} strokeWidth={2} aria-hidden />
               </button>
-              <button onClick={handleCancel} className="cancel-btn icon-only" title="Отмена">
-                ❌
+              <button onClick={handleCancel} className="flex items-center justify-center w-9 h-9 rounded-md bg-gray-100 border border-gray-200 text-gray-500 hover:bg-gray-200 hover:border-gray-300 transition-colors" title="Отмена">
+                <X size={18} strokeWidth={2} aria-hidden />
               </button>
             </div>
           )}
@@ -338,9 +381,9 @@ export default function EditableWorkoutCard({
       </div>
 
       {isEditing ? (
-        <div className="editable-exercises">
+        <div className="mt-4">
           <div className="workout-edit-fields">
-            <div className="form-group">
+            <div className="form-group flex flex-col gap-2">
               <label htmlFor="workout-name">Название тренировки:</label>
               <input
                 id="workout-name"
@@ -351,7 +394,7 @@ export default function EditableWorkoutCard({
                 placeholder="Название тренировки"
               />
             </div>
-            <div className="form-group">
+            <div className="form-group flex flex-col gap-2">
               <label htmlFor="workout-date">Дата тренировки:</label>
               <input
                 id="workout-date"
@@ -363,7 +406,7 @@ export default function EditableWorkoutCard({
             </div>
             {editedWorkout.isSkip && (
               <>
-                <div className="form-group">
+                <div className="form-group flex flex-col gap-2">
                   <label htmlFor="skip-end-date">Дата окончания пропуска (опционально):</label>
                   <input
                     id="skip-end-date"
@@ -382,9 +425,9 @@ export default function EditableWorkoutCard({
                     min={new Date(editedWorkout.date).toISOString().split('T')[0]}
                     className="workout-date-input"
                   />
-                  <small className="form-help">Оставьте пустым для пропуска одного дня</small>
+                  <small className="block mt-1 text-sm text-[var(--color-text-muted)] italic">Оставьте пустым для пропуска одного дня</small>
                 </div>
-                <div className="form-group">
+                <div className="form-group flex flex-col gap-2">
                   <label htmlFor="skip-reason">Причина пропуска:</label>
                   <select
                     id="skip-reason"
@@ -420,7 +463,7 @@ export default function EditableWorkoutCard({
                   </select>
                 </div>
                 {editedWorkout.skipReason === 'other' && (
-                  <div className="form-group">
+                  <div className="form-group flex flex-col gap-2">
                     <label htmlFor="custom-reason">Укажите причину:</label>
                     <input
                       type="text"
@@ -433,7 +476,7 @@ export default function EditableWorkoutCard({
                     />
                   </div>
                 )}
-                <div className="form-group">
+                <div className="form-group flex flex-col gap-2">
                   <label>Цвет для отображения:</label>
                   <div className="color-options">
                     <label className="color-option">
@@ -441,6 +484,7 @@ export default function EditableWorkoutCard({
                         type="radio"
                         name={`skip-color-${workout.id}`}
                         value="blue"
+                        className="m-0"
                         checked={editedWorkout.skipColor === 'blue'}
                         onChange={(e) =>
                           setEditedWorkout({
@@ -449,7 +493,7 @@ export default function EditableWorkoutCard({
                           })
                         }
                       />
-                      <span className="color-preview blue"></span>
+                      <span className="w-5 h-5 rounded border border-[var(--color-border-preview)] bg-[var(--color-primary)]"></span>
                       <span>Синий</span>
                     </label>
                     <label className="color-option">
@@ -457,6 +501,7 @@ export default function EditableWorkoutCard({
                         type="radio"
                         name={`skip-color-${workout.id}`}
                         value="red"
+                        className="m-0"
                         checked={editedWorkout.skipColor === 'red'}
                         onChange={(e) =>
                           setEditedWorkout({
@@ -465,7 +510,7 @@ export default function EditableWorkoutCard({
                           })
                         }
                       />
-                      <span className="color-preview red"></span>
+                      <span className="w-5 h-5 rounded border border-[var(--color-border-preview)] bg-[var(--color-danger)]"></span>
                       <span>Красный</span>
                     </label>
                     <label className="color-option">
@@ -473,6 +518,7 @@ export default function EditableWorkoutCard({
                         type="radio"
                         name={`skip-color-${workout.id}`}
                         value="orange"
+                        className="m-0"
                         checked={editedWorkout.skipColor === 'orange'}
                         onChange={(e) =>
                           setEditedWorkout({
@@ -481,7 +527,7 @@ export default function EditableWorkoutCard({
                           })
                         }
                       />
-                      <span className="color-preview orange"></span>
+                      <span className="w-5 h-5 rounded border border-[var(--color-border-preview)] bg-[var(--color-warning)]"></span>
                       <span>Оранжевый</span>
                     </label>
                     <label className="color-option">
@@ -489,6 +535,7 @@ export default function EditableWorkoutCard({
                         type="radio"
                         name={`skip-color-${workout.id}`}
                         value="yellow"
+                        className="m-0"
                         checked={editedWorkout.skipColor === 'yellow'}
                         onChange={(e) =>
                           setEditedWorkout({
@@ -497,12 +544,12 @@ export default function EditableWorkoutCard({
                           })
                         }
                       />
-                      <span className="color-preview yellow"></span>
+                      <span className="w-5 h-5 rounded border border-[var(--color-border-preview)] bg-[var(--color-warning-light)]"></span>
                       <span>Желтый</span>
                     </label>
                   </div>
                 </div>
-                <div className="form-group">
+                <div className="form-group flex flex-col gap-2">
                   <label htmlFor="skip-notes">Заметки:</label>
                   <textarea
                     id="skip-notes"
@@ -706,66 +753,77 @@ export default function EditableWorkoutCard({
             </>
           )}
         </div>
-      ) : (
-        <div className="exercises">
-          {(editedWorkout.exercises || []).map((exercise, exerciseIndex) => {
-            const tonnage = calculateExerciseTonnage(exercise)
-            return (
-              <div key={exerciseIndex} className="exercise">
-                <h3>
-                  {exercise.name}
-                  {tonnage > 0 && (
-                    <span className="exercise-tonnage"> - {tonnage.toLocaleString()} кг</span>
-                  )}
-                </h3>
-                <div className="sets-compact">
-                  {(exercise.sets || []).map((set, setIndex) => {
-                    let setText = ''
+      ) : hasExpandableContent ? (
+        <motion.div
+          initial={false}
+          animate={{
+            height: isExpanded ? 'auto' : 0,
+            opacity: isExpanded ? 1 : 0,
+          }}
+          transition={{ duration: 0.25, ease: 'easeInOut' }}
+          className="overflow-hidden"
+        >
+          {isExpanded && (editedWorkout.exercises?.length ?? 0) > 0 && (
+            <div className="exercises">
+              {(editedWorkout.exercises || []).map((exercise, exerciseIndex) => {
+                const tonnage = calculateExerciseTonnage(exercise)
+                return (
+                  <div key={exerciseIndex} className="exercise">
+                    <h3>
+                      {exercise.name}
+                      {tonnage > 0 && (
+                        <span className="exercise-tonnage"> - {tonnage.toLocaleString()} кг</span>
+                      )}
+                    </h3>
+                    <div className="sets-compact">
+                      {(exercise.sets || []).map((set, setIndex) => {
+                        let setText = ''
 
-                    if (exercise.exerciseType === 'strength') {
-                      const parts: string[] = []
-                      if (set.reps && set.weight) {
-                        parts.push(`${set.reps}×${set.weight} кг`)
-                      } else if (set.reps) {
-                        parts.push(`${set.reps} повт.`)
-                      } else if (set.weight) {
-                        parts.push(`${set.weight} кг`)
-                      }
-                      setText = parts.join(' ')
-                    } else {
-                      const parts: string[] = []
-                      const formattedDuration = formatDuration(set.duration)
-                      if (formattedDuration) parts.push(formattedDuration)
-                      if (set.distance) parts.push(`${set.distance} км`)
-                      setText = parts.join(' ')
-                    }
+                        if (exercise.exerciseType === 'strength') {
+                          const parts: string[] = []
+                          if (set.reps && set.weight) {
+                            parts.push(`${set.reps}×${set.weight} кг`)
+                          } else if (set.reps) {
+                            parts.push(`${set.reps} повт.`)
+                          } else if (set.weight) {
+                            parts.push(`${set.weight} кг`)
+                          }
+                          setText = parts.join(' ')
+                        } else {
+                          const parts: string[] = []
+                          const formattedDuration = formatDuration(set.duration)
+                          if (formattedDuration) parts.push(formattedDuration)
+                          if (set.distance) parts.push(`${set.distance} км`)
+                          setText = parts.join(' ')
+                        }
 
-                    if (set.notes) {
-                      setText += ` (${set.notes})`
-                    }
+                        if (set.notes) {
+                          setText += ` (${set.notes})`
+                        }
 
-                    return setText ? (
-                      <span key={setIndex} className="set-inline">
-                        {setText}
-                        {setIndex < (exercise.sets?.length || 0) - 1 && (
-                          <span className="set-separator"> | </span>
-                        )}
-                      </span>
-                    ) : null
-                  })}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {editedWorkout.notes && (
-        <div className="workout-notes">
-          <h4>Заметки:</h4>
-          <p>{editedWorkout.notes}</p>
-        </div>
-      )}
+                        return setText ? (
+                          <span key={setIndex} className="inline whitespace-nowrap">
+                            {setText}
+                            {setIndex < (exercise.sets?.length || 0) - 1 && (
+                              <span className="text-[var(--color-border-muted)] mx-2 font-normal"> | </span>
+                            )}
+                          </span>
+                        ) : null
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+          {isExpanded && editedWorkout.notes && (
+            <div className="workout-notes">
+              <h4>Заметки:</h4>
+              <p>{editedWorkout.notes}</p>
+            </div>
+          )}
+        </motion.div>
+      ) : null}
 
       <CopyWorkoutModal
         isOpen={isCopyModalOpen}

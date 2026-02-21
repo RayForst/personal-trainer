@@ -165,20 +165,29 @@ export default function GoalDayModal({
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-xl w-full max-w-[600px] max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-center p-6 border-b border-gray-200 shrink-0">
+          <h2 className="m-0 text-gray-800 text-2xl">
             {goal.name} - {formatDate(date)}
           </h2>
-          <button onClick={onClose} className="close-btn">
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-red-600 text-white border-none cursor-pointer flex items-center justify-center text-xl leading-none transition-colors hover:bg-red-700 shrink-0"
+          >
             ×
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="modal-form">
-          <div className="form-group">
-            <label htmlFor="goal-day-value">
+        <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-6">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="goal-day-value" className="font-semibold text-gray-600 text-sm">
               Значение ({goal.unit && goal.unit.toLowerCase().trim() !== 'секунд' ? goal.unit : ''}):
             </label>
             <input
@@ -187,30 +196,39 @@ export default function GoalDayModal({
               step="0.01"
               value={formData.value}
               onChange={(e) => setFormData((prev) => ({ ...prev, value: e.target.value }))}
+              className="py-3 px-3 border-2 border-gray-200 rounded-lg text-base transition-colors focus:outline-none focus:border-blue-600 focus:shadow-[0_0_0_3px_rgba(0,123,255,0.1)]"
               required
               autoFocus
             />
-            <small className="form-help">
+            <small className="block mt-1 text-sm text-gray-500 italic">
               Введите значение для {formatDate(date)}
             </small>
           </div>
 
-          <div className="modal-actions">
+          <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
             {activityRecordId && (
               <button
                 type="button"
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="delete-btn"
+                className="py-3 px-6 bg-red-600 text-white border-none rounded-md text-base font-medium cursor-pointer transition-colors hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {isDeleting ? 'Удаление...' : 'Удалить запись'}
               </button>
             )}
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <button type="button" onClick={onClose} className="cancel-btn">
+            <div className="flex gap-4 ml-auto">
+              <button
+                type="button"
+                onClick={onClose}
+                className="py-3 px-6 bg-gray-500 text-white border-none rounded-md text-base font-medium cursor-pointer transition-colors hover:bg-gray-600"
+              >
                 Отмена
               </button>
-              <button type="submit" disabled={isSubmitting} className="submit-btn">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="py-3 px-6 bg-blue-600 text-white border-none rounded-md text-base font-medium cursor-pointer transition-colors hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
                 {isSubmitting ? 'Сохранение...' : 'Сохранить'}
               </button>
             </div>
