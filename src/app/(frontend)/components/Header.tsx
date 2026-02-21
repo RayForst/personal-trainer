@@ -9,6 +9,8 @@ interface HeaderStats {
   maxWeight: number
   totalVolume: number
   daysSinceLastWorkout: number | null
+  currentWeight: number | null
+  currentBodyFat: number | null
 }
 
 function formatVolume(n: number): string {
@@ -77,6 +79,12 @@ export default function Header() {
           >
             Упражнения
           </button>
+          <button
+            onClick={() => router.push('/state')}
+            className={`nav-btn ${pathname === '/state' ? 'active' : ''}`}
+          >
+            Моё состояние
+          </button>
         </nav>
         {stats && (
           <div className="header-stats">
@@ -106,6 +114,16 @@ export default function Header() {
                     : stats.daysSinceLastWorkout === 1
                       ? 'вчера'
                       : `${stats.daysSinceLastWorkout} дн. назад`}
+              </span>
+            </div>
+            <div className="header-stat">
+              <span className="header-stat-label">Текущий вес:</span>
+              <span className="header-stat-value">
+                {stats.currentWeight != null ? stats.currentWeight : '—'}
+                {' кг'}
+                {stats.currentBodyFat != null
+                  ? ` (${stats.currentBodyFat}%)`
+                  : ''}
               </span>
             </div>
           </div>

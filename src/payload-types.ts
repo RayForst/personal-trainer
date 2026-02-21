@@ -74,6 +74,8 @@ export interface Config {
     goals: Goal;
     'goal-activity-records': GoalActivityRecord;
     exercises: Exercise;
+    'body-state': BodyState;
+    'body-fat': BodyFat;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -87,6 +89,8 @@ export interface Config {
     goals: GoalsSelect<false> | GoalsSelect<true>;
     'goal-activity-records': GoalActivityRecordsSelect<false> | GoalActivityRecordsSelect<true>;
     exercises: ExercisesSelect<false> | ExercisesSelect<true>;
+    'body-state': BodyStateSelect<false> | BodyStateSelect<true>;
+    'body-fat': BodyFatSelect<false> | BodyFatSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -295,6 +299,40 @@ export interface Exercise {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "body-state".
+ */
+export interface BodyState {
+  id: string;
+  /**
+   * Ваш вес на дату записи
+   */
+  weight: number;
+  /**
+   * Дата, когда была сделана запись
+   */
+  date: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "body-fat".
+ */
+export interface BodyFat {
+  id: string;
+  /**
+   * Процент жира в организме на дату записи
+   */
+  value: number;
+  /**
+   * Дата, когда была сделана запись
+   */
+  date: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -327,6 +365,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'exercises';
         value: string | Exercise;
+      } | null)
+    | ({
+        relationTo: 'body-state';
+        value: string | BodyState;
+      } | null)
+    | ({
+        relationTo: 'body-fat';
+        value: string | BodyFat;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -503,6 +549,26 @@ export interface ExercisesSelect<T extends boolean = true> {
   muscleGroup?: T;
   description?: T;
   notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "body-state_select".
+ */
+export interface BodyStateSelect<T extends boolean = true> {
+  weight?: T;
+  date?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "body-fat_select".
+ */
+export interface BodyFatSelect<T extends boolean = true> {
+  value?: T;
+  date?: T;
   updatedAt?: T;
   createdAt?: T;
 }

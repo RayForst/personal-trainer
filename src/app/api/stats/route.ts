@@ -22,28 +22,39 @@ export async function GET() {
   try {
     const payload = await getPayload({ config })
 
-    const [exercisesRes, workoutsRes, lastWorkoutRes] = await Promise.all([
-      payload.find({
-        collection: 'exercises',
-        limit: 0,
-      }),
-      payload.find({
-        collection: 'workouts',
-        limit: 10000,
-        depth: 2,
-        where: {
-          isSkip: { not_equals: true },
-        },
-      }),
-      payload.find({
-        collection: 'workouts',
-        limit: 1,
-        sort: '-date',
-        where: {
-          isSkip: { not_equals: true },
-        },
-      }),
-    ])
+    const [exercisesRes, workoutsRes, lastWorkoutRes, lastBodyStateRes, lastBodyFatRes] =
+      await Promise.all([
+        payload.find({
+          collection: 'exercises',
+          limit: 0,
+        }),
+        payload.find({
+          collection: 'workouts',
+          limit: 10000,
+          depth: 2,
+          where: {
+            isSkip: { not_equals: true },
+          },
+        }),
+        payload.find({
+          collection: 'workouts',
+          limit: 1,
+          sort: '-date',
+          where: {
+            isSkip: { not_equals: true },
+          },
+        }),
+        payload.find({
+          collection: 'body-state',
+          limit: 1,
+          sort: '-date',
+        }),
+        payload.find({
+          collection: 'body-fat',
+          limit: 1,
+          sort: '-date',
+        }),
+      ])
 
     let maxWeight = 0
     let totalVolume = 0
@@ -75,12 +86,26 @@ export async function GET() {
       )
     }
 
+    const lastBodyState = lastBodyStateRes.docs[0] as
+      | { weight: number }
+      | undefined
+    const currentWeight =
+      lastBodyState?.weight != null ? lastBodyState.weight : null
+
+    const lastBodyFat = lastBodyFatRes.docs[0] as
+      | { value: number }
+      | undefined
+    const currentBodyFat =
+      lastBodyFat?.value != null ? lastBodyFat.value : null
+
     return NextResponse.json({
       exercisesCount: exercisesRes.totalDocs,
       workoutsCount: workoutsRes.totalDocs,
       maxWeight: Math.round(maxWeight * 10) / 10,
       totalVolume: Math.round(totalVolume),
       daysSinceLastWorkout,
+      currentWeight,
+      currentBodyFat,
     })
   } catch (error) {
     console.error('Error fetching stats:', error)

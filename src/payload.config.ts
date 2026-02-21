@@ -14,6 +14,8 @@ import { WorkoutTemplates } from './collections/WorkoutTemplates'
 import { Goals } from './collections/Goals'
 import { GoalActivityRecords } from './collections/GoalActivityRecords'
 import { Exercises } from './collections/Exercises'
+import { BodyState } from './collections/BodyState'
+import { BodyFat } from './collections/BodyFat'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -25,7 +27,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Workouts, WorkoutTemplates, Goals, GoalActivityRecords, Exercises],
+  collections: [Users, Media, Workouts, WorkoutTemplates, Goals, GoalActivityRecords, Exercises, BodyState, BodyFat],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
