@@ -7,6 +7,7 @@ import GoalDayModal from './GoalDayModal'
 interface WorkoutStatsProps {
   workouts: Workout[]
   selectedDate: string | null
+  compact?: boolean
 }
 
 interface WorkoutStats {
@@ -27,7 +28,7 @@ type GoalWithActivity = Goal & {
   activityRecordId?: string | null
 }
 
-export default function WorkoutStats({ workouts, selectedDate }: WorkoutStatsProps) {
+export default function WorkoutStats({ workouts, selectedDate, compact = false }: WorkoutStatsProps) {
   const [goals, setGoals] = useState<GoalWithActivity[]>([])
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null)
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false)
@@ -163,81 +164,71 @@ export default function WorkoutStats({ workouts, selectedDate }: WorkoutStatsPro
 
   const stats = calculateStats(workouts)
 
-  // Проверяем, есть ли данные для отображения
-  const hasWorkouts = workouts.length > 0
-  const hasGoals = goals.length > 0
+  const cardSize = compact ? 'w-24 h-24' : 'w-40 h-40'
+  const cardPadding = compact ? 'p-2' : 'p-4'
+  const valueSize = compact ? 'text-base' : 'text-2xl'
+  const labelSize = compact ? 'text-xs' : 'text-sm'
 
-  const statCard =
-    'w-40 h-40 flex flex-col justify-center rounded-lg p-4 text-center border border-gray-200 bg-gray-50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md'
-  const statCardPrimary =
-    'w-40 h-40 flex flex-col justify-center rounded-lg p-4 text-center border-none bg-gradient-to-br from-indigo-500 to-purple-600 text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md'
+  const statCard = `${cardSize} flex flex-col justify-center rounded-lg ${cardPadding} text-center border border-gray-200 bg-gray-50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md`
+  const statCardPrimary = `${cardSize} flex flex-col justify-center rounded-lg ${cardPadding} text-center border-none bg-gradient-to-br from-indigo-500 to-purple-600 text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md`
 
-  if (!selectedDate || (!hasWorkouts && !hasGoals)) {
-    return (
-      <section className="bg-white rounded-xl p-6 shadow-sm">
-        <h2 className="m-0 mb-6 text-2xl text-gray-800">Статистика дня</h2>
-        <div className="text-center text-gray-500 py-8">
-          <p className="m-0">Выберите день с тренировками или целями для просмотра статистики</p>
-        </div>
-      </section>
-    )
-  }
+  if (!selectedDate) return null
 
   return (
-    <section className="bg-white rounded-xl p-6 shadow-sm">
-      <h2 className="m-0 mb-6 text-2xl text-gray-800">
-        Статистика дня <span className="text-sm text-gray-500 font-normal">({formatDate(selectedDate)})</span>
+    <section className={compact ? '' : 'bg-white rounded-xl p-6 shadow-sm'}>
+      <h2 className={`m-0 text-gray-800 ${compact ? 'text-sm font-semibold mb-2' : 'text-2xl mb-6'}`}>
+        Статистика дня <span className={compact ? 'text-xs text-gray-500 font-normal' : 'text-sm text-gray-500 font-normal'}>({formatDate(selectedDate)})</span>
       </h2>
-      <div className="flex flex-wrap gap-2">
+      <div className={`flex flex-wrap ${compact ? 'gap-1.5' : 'gap-2'}`}>
         <div className={statCardPrimary}>
-          <div className="text-2xl font-bold mb-2">{stats.totalTonnage.toLocaleString()}</div>
-          <div className="text-sm opacity-80">кг общий тоннаж</div>
+          <div className={`${valueSize} font-bold ${compact ? 'mb-0.5' : 'mb-2'}`}>{stats.totalTonnage.toLocaleString()}</div>
+          <div className={`${labelSize} opacity-80`}>кг общий тоннаж</div>
         </div>
 
         <div className={statCard}>
-          <div className="text-2xl font-bold mb-2">{stats.totalSets}</div>
-          <div className="text-sm text-gray-600 opacity-80">подходов</div>
+          <div className={`${valueSize} font-bold ${compact ? 'mb-0.5' : 'mb-2'}`}>{stats.totalSets}</div>
+          <div className={`${labelSize} text-gray-600 opacity-80`}>подходов</div>
         </div>
 
         <div className={statCard}>
-          <div className="text-2xl font-bold mb-2">{stats.totalReps}</div>
-          <div className="text-sm text-gray-600 opacity-80">повторений</div>
+          <div className={`${valueSize} font-bold ${compact ? 'mb-0.5' : 'mb-2'}`}>{stats.totalReps}</div>
+          <div className={`${labelSize} text-gray-600 opacity-80`}>повторений</div>
         </div>
 
         <div className={statCard}>
-          <div className="text-2xl font-bold mb-2">{stats.exerciseCount}</div>
-          <div className="text-sm text-gray-600 opacity-80">упражнений</div>
+          <div className={`${valueSize} font-bold ${compact ? 'mb-0.5' : 'mb-2'}`}>{stats.exerciseCount}</div>
+          <div className={`${labelSize} text-gray-600 opacity-80`}>упражнений</div>
         </div>
 
         {stats.maxWeight > 0 && (
           <div className={statCard}>
-            <div className="text-2xl font-bold mb-2">{stats.maxWeight}</div>
-            <div className="text-sm text-gray-600 opacity-80">кг макс. вес</div>
+            <div className={`${valueSize} font-bold ${compact ? 'mb-0.5' : 'mb-2'}`}>{stats.maxWeight}</div>
+            <div className={`${labelSize} text-gray-600 opacity-80`}>кг макс. вес</div>
           </div>
         )}
 
         {stats.maxReps > 0 && (
           <div className={statCard}>
-            <div className="text-2xl font-bold mb-2">{stats.maxReps}</div>
-            <div className="text-sm text-gray-600 opacity-80">макс. повторов</div>
+            <div className={`${valueSize} font-bold ${compact ? 'mb-0.5' : 'mb-2'}`}>{stats.maxReps}</div>
+            <div className={`${labelSize} text-gray-600 opacity-80`}>макс. повторов</div>
           </div>
         )}
 
         {stats.totalDuration > 0 && (
           <div className={statCard}>
-            <div className="text-2xl font-bold mb-2">{formatDuration(stats.totalDuration)}</div>
-            <div className="text-sm text-gray-600 opacity-80">кардио</div>
+            <div className={`${valueSize} font-bold ${compact ? 'mb-0.5' : 'mb-2'}`}>{formatDuration(stats.totalDuration)}</div>
+            <div className={`${labelSize} text-gray-600 opacity-80`}>кардио</div>
           </div>
         )}
 
         <div className={statCard}>
-          <div className="text-2xl font-bold mb-2">{stats.strengthExercises}</div>
-          <div className="text-sm text-gray-600 opacity-80">силовых</div>
+          <div className={`${valueSize} font-bold ${compact ? 'mb-0.5' : 'mb-2'}`}>{stats.strengthExercises}</div>
+          <div className={`${labelSize} text-gray-600 opacity-80`}>силовых</div>
         </div>
 
         <div className={statCard}>
-          <div className="text-2xl font-bold mb-2">{stats.cardioExercises}</div>
-          <div className="text-sm text-gray-600 opacity-80">кардио</div>
+          <div className={`${valueSize} font-bold ${compact ? 'mb-0.5' : 'mb-2'}`}>{stats.cardioExercises}</div>
+          <div className={`${labelSize} text-gray-600 opacity-80`}>кардио</div>
         </div>
 
         {/* Отображение целей */}
@@ -277,16 +268,16 @@ export default function WorkoutStats({ workouts, selectedDate }: WorkoutStatsPro
                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/30 to-purple-600/25 rounded-lg z-0" />
               )}
               <div className="relative z-10">
-                <div className="text-2xl font-bold mb-2">
+                <div className={`${valueSize} font-bold ${compact ? 'mb-0.5' : 'mb-2'}`}>
                   {goal.activityValue !== null && goal.activityValue !== undefined
                     ? goal.activityValue.toLocaleString()
                     : '—'}
                   {goal.unit && goal.unit.toLowerCase().trim() !== 'секунд' && ` ${goal.unit}`}
                 </div>
-                <div className="text-sm opacity-80">{goal.name}</div>
+                <div className={`${labelSize} opacity-80`}>{goal.name}</div>
               </div>
               {goal.endDate && (
-                <div className="text-base font-bold mt-4 opacity-80">
+                <div className={`font-bold opacity-80 ${compact ? 'text-xs mt-1' : 'text-base mt-4'}`}>
                   {new Date(goal.endDate).toLocaleDateString('ru-RU')}
                 </div>
               )}

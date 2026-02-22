@@ -55,6 +55,29 @@ const PRIORITY_COLORS: Record<PaymentPriority, string> = {
   low: 'bg-gray-400',
 }
 
+export interface DesiredExpenseRecord {
+  id: string
+  name: string
+  amount: number
+  targetDate: string | null
+  priority?: PaymentPriority
+  notes?: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PotentialDebtRecord {
+  id: string
+  amount: number
+  who: string
+  returnDate: string | null
+  priority?: DebtPriority
+  isMonthlyPayment?: boolean
+  monthlyAmount?: number | null
+  createdAt: string
+  updatedAt: string
+}
+
 export interface IncomeRecord {
   id: string
   amount: number
@@ -94,20 +117,39 @@ export default function DebtsPage() {
   const [ppPriority, setPpPriority] = useState<PaymentPriority>('normal')
   const [ppSubmitting, setPpSubmitting] = useState(false)
   const [editingPlannedPaymentId, setEditingPlannedPaymentId] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'debts' | 'payments'>('debts')
+  const [activeTab, setActiveTab] = useState<'debts' | 'payments' | 'potential'>('debts')
   const [incomes, setIncomes] = useState<IncomeRecord[]>([])
   const [incAmount, setIncAmount] = useState('')
   const [incSource, setIncSource] = useState('')
   const [incDate, setIncDate] = useState('')
   const [incSubmitting, setIncSubmitting] = useState(false)
   const [editingDebtId, setEditingDebtId] = useState<string | null>(null)
+  const [potentialDebts, setPotentialDebts] = useState<PotentialDebtRecord[]>([])
+  const [pdAmount, setPdAmount] = useState('')
+  const [pdWho, setPdWho] = useState('')
+  const [pdReturnDate, setPdReturnDate] = useState('')
+  const [pdPriority, setPdPriority] = useState<DebtPriority>('normal')
+  const [pdHasPaymentSchedule, setPdHasPaymentSchedule] = useState(false)
+  const [pdMonthlyAmount, setPdMonthlyAmount] = useState('')
+  const [pdSubmitting, setPdSubmitting] = useState(false)
+  const [editingPotentialDebtId, setEditingPotentialDebtId] = useState<string | null>(null)
+  const [desiredExpenses, setDesiredExpenses] = useState<DesiredExpenseRecord[]>([])
+  const [deName, setDeName] = useState('')
+  const [deAmount, setDeAmount] = useState('')
+  const [deTargetDate, setDeTargetDate] = useState('')
+  const [dePriority, setDePriority] = useState<PaymentPriority>('normal')
+  const [deNotes, setDeNotes] = useState('')
+  const [deSubmitting, setDeSubmitting] = useState(false)
+  const [editingDesiredExpenseId, setEditingDesiredExpenseId] = useState<string | null>(null)
 
   const fetchRecords = async () => {
     try {
       setLoading(true)
-      const [debtsRes, ppRes, incomesRes] = await Promise.all([
+      const [debtsRes, ppRes, pdRes, deRes, incomesRes] = await Promise.all([
         fetch('/api/debts'),
         fetch('/api/planned-payments'),
+        fetch('/api/potential-debts'),
+        fetch('/api/desired-expenses'),
         fetch('/api/incomes'),
       ])
       if (debtsRes.ok) {
@@ -121,6 +163,18 @@ export default function DebtsPage() {
         setPlannedPayments(data.docs || [])
       } else {
         showToast.error('Ошибка загрузки планируемых платежей')
+      }
+      if (pdRes.ok) {
+        const data = await pdRes.json()
+        setPotentialDebts(data.docs || [])
+      } else {
+        showToast.error('Ошибка загрузки потенциальных долгов')
+      }
+      if (deRes.ok) {
+        const data = await deRes.json()
+        setDesiredExpenses(data.docs || [])
+      } else {
+        showToast.error('Ошибка загрузки желаемых расходов')
       }
       if (incomesRes.ok) {
         const data = await incomesRes.json()
@@ -241,7 +295,195 @@ export default function DebtsPage() {
     return sum
   }, 0)
   const plannedPaymentsTotal = plannedPayments.reduce((sum, p) => sum + (p.amount || 0), 0)
+  const potentialDebtTotal = potentialDebts.reduce((sum, r) => sum + (r.amount || 0), 0)
+  const potentialDebtMonthly = potentialDebts.reduce((sum, r) => {
+    if (r.isMonthlyPayment && r.monthlyAmount != null) return sum + r.monthlyAmount
+    return sum
+  }, 0)
+  const desiredExpensesTotal = desiredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0)
   const monthlyIncomeTotal = incomes.reduce((sum, i) => sum + (i.amount || 0), 0)
+
+  const handleDesiredExpenseEdit = (e: DesiredExpenseRecord) => {
+    setEditingDesiredExpenseId(e.id)
+    setDeName(e.name)
+    setDeAmount(String(e.amount))
+    setDeTargetDate(e.targetDate || '')
+    setDePriority((e.priority || 'normal') as PaymentPriority)
+    setDeNotes(e.notes || '')
+  }
+
+  const handleDesiredExpenseCancelEdit = () => {
+    setEditingDesiredExpenseId(null)
+    setDeName('')
+    setDeAmount('')
+    setDeTargetDate('')
+    setDePriority('normal')
+    setDeNotes('')
+  }
+
+  const handleDesiredExpenseSubmit = async (ev: React.FormEvent) => {
+    ev.preventDefault()
+    const nameTrimmed = deName.trim()
+    if (!nameTrimmed) {
+      showToast.error('Введите название')
+      return
+    }
+    const a = parseFloat(deAmount.replace(',', '.'))
+    if (Number.isNaN(a) || a <= 0) {
+      showToast.error('Введите корректную сумму')
+      return
+    }
+    setDeSubmitting(true)
+    try {
+      const body = {
+        name: nameTrimmed,
+        amount: a,
+        targetDate: deTargetDate || undefined,
+        priority: dePriority,
+        notes: deNotes.trim() || undefined,
+      }
+      const url = editingDesiredExpenseId
+        ? `/api/desired-expenses/${editingDesiredExpenseId}`
+        : '/api/desired-expenses'
+      const method = editingDesiredExpenseId ? 'PATCH' : 'POST'
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        showToast.success(
+          editingDesiredExpenseId ? 'Желаемый расход обновлён' : 'Желаемый расход добавлен',
+        )
+        handleDesiredExpenseCancelEdit()
+        if (editingDesiredExpenseId) {
+          setDesiredExpenses((prev) =>
+            prev.map((e) => (e.id === editingDesiredExpenseId ? data : e)),
+          )
+        } else {
+          setDesiredExpenses((prev) => [data, ...prev])
+        }
+      } else {
+        showToast.error(data.error || 'Ошибка сохранения')
+      }
+    } catch (e) {
+      showToast.error('Ошибка сохранения')
+    } finally {
+      setDeSubmitting(false)
+    }
+  }
+
+  const handleDesiredExpenseDelete = async (id: string) => {
+    const ok = await confirmAction('Удалить эту запись?')
+    if (!ok) return
+    try {
+      const res = await fetch(`/api/desired-expenses/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        showToast.success('Запись удалена')
+        setDesiredExpenses((prev) => prev.filter((e) => e.id !== id))
+      } else {
+        showToast.error('Ошибка удаления')
+      }
+    } catch (e) {
+      showToast.error('Ошибка удаления')
+    }
+  }
+
+  const handlePotentialDebtEdit = (r: PotentialDebtRecord) => {
+    setEditingPotentialDebtId(r.id)
+    setPdAmount(String(r.amount))
+    setPdWho(r.who)
+    setPdReturnDate(r.returnDate || '')
+    setPdPriority((r.priority || 'normal') as DebtPriority)
+    setPdHasPaymentSchedule(Boolean(r.isMonthlyPayment))
+    setPdMonthlyAmount(r.monthlyAmount != null ? String(r.monthlyAmount) : '')
+  }
+
+  const handlePotentialDebtCancelEdit = () => {
+    setEditingPotentialDebtId(null)
+    setPdAmount('')
+    setPdWho('')
+    setPdReturnDate('')
+    setPdPriority('normal')
+    setPdHasPaymentSchedule(false)
+    setPdMonthlyAmount('')
+  }
+
+  const handlePotentialDebtSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const a = parseFloat(pdAmount.replace(',', '.'))
+    if (Number.isNaN(a) || a <= 0) {
+      showToast.error('Введите корректную сумму (число больше 0)')
+      return
+    }
+    const whoTrimmed = pdWho.trim()
+    if (!whoTrimmed) {
+      showToast.error('Укажите, кто кому должен')
+      return
+    }
+    let monthlyVal: number | undefined
+    if (pdHasPaymentSchedule) {
+      const m = parseFloat(pdMonthlyAmount.replace(',', '.'))
+      if (Number.isNaN(m) || m <= 0) {
+        showToast.error('Введите корректную сумму ежемесячного платежа')
+        return
+      }
+      monthlyVal = m
+    }
+    setPdSubmitting(true)
+    try {
+      const body = {
+        amount: a,
+        who: whoTrimmed,
+        returnDate: pdReturnDate || undefined,
+        priority: pdPriority,
+        isMonthlyPayment: pdHasPaymentSchedule,
+        monthlyAmount: monthlyVal,
+      }
+      const url = editingPotentialDebtId ? `/api/potential-debts/${editingPotentialDebtId}` : '/api/potential-debts'
+      const method = editingPotentialDebtId ? 'PATCH' : 'POST'
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        showToast.success(editingPotentialDebtId ? 'Потенциальный долг обновлён' : 'Потенциальный долг добавлен')
+        handlePotentialDebtCancelEdit()
+        if (editingPotentialDebtId) {
+          setPotentialDebts((prev) =>
+            prev.map((r) => (r.id === editingPotentialDebtId ? data : r)),
+          )
+        } else {
+          setPotentialDebts((prev) => [data, ...prev])
+        }
+      } else {
+        showToast.error(data.error || 'Ошибка сохранения')
+      }
+    } catch (e) {
+      showToast.error('Ошибка сохранения')
+    } finally {
+      setPdSubmitting(false)
+    }
+  }
+
+  const handlePotentialDebtDelete = async (id: string) => {
+    const ok = await confirmAction('Удалить эту запись?')
+    if (!ok) return
+    try {
+      const res = await fetch(`/api/potential-debts/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        showToast.success('Запись удалена')
+        setPotentialDebts((prev) => prev.filter((r) => r.id !== id))
+      } else {
+        showToast.error('Ошибка удаления')
+      }
+    } catch (e) {
+      showToast.error('Ошибка удаления')
+    }
+  }
 
   const handleIncomeSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -416,6 +658,17 @@ export default function DebtsPage() {
               }`}
             >
               Платежи
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('potential')}
+              className={`px-4 py-2.5 text-sm font-medium rounded-t-md transition-colors -mb-px ${
+                activeTab === 'potential'
+                  ? 'bg-white border border-gray-200 border-b-white text-gray-800'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Потенциальный долг
             </button>
           </div>
 
@@ -845,6 +1098,258 @@ export default function DebtsPage() {
           </div>
             </>
           )}
+
+          {activeTab === 'potential' && (
+            <>
+          <h2 className="mt-0 mb-3 text-[1.15rem] text-gray-800">Потенциальный долг</h2>
+          <p className="m-0 mb-4 text-gray-500 text-sm">
+            Вещи, которые можно и не платить. Не попадает в общий долг.
+          </p>
+          <form
+            className="flex flex-col gap-4 mb-8"
+            onSubmit={handlePotentialDebtSubmit}
+          >
+            <div className="flex flex-wrap items-end gap-4">
+              <div className="flex flex-col gap-1">
+                <label htmlFor="pd-amount" className="text-sm font-medium text-gray-600">
+                  Сумма (€)
+                </label>
+                <input
+                  id="pd-amount"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  placeholder="1000"
+                  value={pdAmount}
+                  onChange={(e) => setPdAmount(e.target.value)}
+                  className="py-2 px-3 border border-gray-200 rounded-md text-base min-w-[120px]"
+                  required
+                />
+              </div>
+              <div className="flex flex-col gap-1 flex-1 min-w-[180px]">
+                <label htmlFor="pd-who" className="text-sm font-medium text-gray-600">
+                  Кто кому должен
+                </label>
+                <input
+                  id="pd-who"
+                  type="text"
+                  placeholder="Иван мне / Я Маше"
+                  value={pdWho}
+                  onChange={(e) => setPdWho(e.target.value)}
+                  className="py-2 px-3 border border-gray-200 rounded-md text-base w-full"
+                  required
+                />
+              </div>
+              {!pdHasPaymentSchedule && (
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="pd-return-date" className="text-sm font-medium text-gray-600">
+                    Дата отдачи
+                  </label>
+                  <input
+                    id="pd-return-date"
+                    type="date"
+                    value={pdReturnDate}
+                    onChange={(e) => setPdReturnDate(e.target.value)}
+                    className="py-2 px-3 border border-gray-200 rounded-md text-base min-w-[140px]"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-medium text-gray-600">Приоритетность</span>
+              <div className="flex items-center gap-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="pd-priority"
+                    checked={pdPriority === 'low'}
+                    onChange={() => setPdPriority('low')}
+                    className="w-4 h-4"
+                  />
+                  <span>Неприоритетный</span>
+                  <span className="inline-block w-3 h-3 rounded-sm shrink-0 bg-gray-400" />
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="pd-priority"
+                    checked={pdPriority === 'normal'}
+                    onChange={() => setPdPriority('normal')}
+                    className="w-4 h-4"
+                  />
+                  <span>Обычный</span>
+                  <span className="inline-block w-3 h-3 rounded-sm shrink-0 bg-orange-500" />
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="pd-priority"
+                    checked={pdPriority === 'high'}
+                    onChange={() => setPdPriority('high')}
+                    className="w-4 h-4"
+                  />
+                  <span>Важный</span>
+                  <span className="inline-block w-3 h-3 rounded-sm shrink-0 bg-red-500" />
+                </label>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-medium text-gray-600">График платежей</span>
+              <div className="flex items-center gap-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="pd-payment-schedule"
+                    checked={!pdHasPaymentSchedule}
+                    onChange={() => setPdHasPaymentSchedule(false)}
+                    className="w-4 h-4"
+                  />
+                  <span>Обычный долг</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="pd-payment-schedule"
+                    checked={pdHasPaymentSchedule}
+                    onChange={() => setPdHasPaymentSchedule(true)}
+                    className="w-4 h-4"
+                  />
+                  <span>Долг с ежемесячной оплатой</span>
+                </label>
+              </div>
+              {pdHasPaymentSchedule && (
+                <div className="flex flex-wrap items-end gap-4 mt-2 p-4 bg-gray-50 rounded-lg">
+                  <div className="flex flex-col gap-1">
+                    <label htmlFor="pd-monthly-amount" className="text-sm font-medium text-gray-600">
+                      Ежемесячный платёж (€)
+                    </label>
+                    <input
+                      id="pd-monthly-amount"
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      placeholder="200"
+                      value={pdMonthlyAmount}
+                      onChange={(e) => setPdMonthlyAmount(e.target.value)}
+                      className="py-2 px-3 border border-gray-200 rounded-md text-base min-w-[140px]"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label htmlFor="pd-return-date-monthly" className="text-sm font-medium text-gray-600">
+                      Дата отдачи
+                    </label>
+                    <input
+                      id="pd-return-date-monthly"
+                      type="date"
+                      value={pdReturnDate}
+                      onChange={(e) => setPdReturnDate(e.target.value)}
+                      className="py-2 px-3 border border-gray-200 rounded-md text-base min-w-[140px]"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                className="py-2 px-5 bg-blue-600 text-white border-none rounded-md font-medium cursor-pointer transition-colors hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed"
+                disabled={pdSubmitting}
+              >
+                {pdSubmitting ? 'Сохранение…' : editingPotentialDebtId ? 'Сохранить' : 'Добавить'}
+              </button>
+              {editingPotentialDebtId && (
+                <button
+                  type="button"
+                  onClick={handlePotentialDebtCancelEdit}
+                  className="py-2 px-4 border border-gray-300 rounded-md text-gray-600 text-sm font-medium cursor-pointer hover:bg-gray-50"
+                >
+                  Отмена
+                </button>
+              )}
+            </div>
+          </form>
+
+          <div>
+            <h3 className="m-0 mb-4 text-base font-semibold text-gray-600">Таблица потенциальных долгов</h3>
+            {loading ? (
+              <p className="m-0 text-gray-500">Загрузка…</p>
+            ) : potentialDebts.length === 0 ? (
+              <p className="m-0 text-gray-500">Пока нет записей. Добавьте первый потенциальный долг.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse [&_th]:py-2.5 [&_th]:px-3 [&_th]:text-left [&_th]:border-b [&_th]:border-gray-200 [&_th]:font-semibold [&_th]:text-gray-600 [&_th]:text-sm [&_td]:py-2.5 [&_td]:px-3 [&_td]:border-b [&_td]:border-gray-200 [&_td:last-child]:text-right">
+                  <thead>
+                    <tr>
+                      <th>Сумма</th>
+                      <th>Кто кому должен</th>
+                      <th>Приоритет</th>
+                      <th>Дата отдачи</th>
+                      <th>Ежемес. платёж</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...potentialDebts]
+                      .sort(
+                        (a, b) =>
+                          DEBT_PRIORITY_ORDER[(a.priority || 'normal') as DebtPriority] -
+                          DEBT_PRIORITY_ORDER[(b.priority || 'normal') as DebtPriority],
+                      )
+                      .map((r) => {
+                        const p = (r.priority || 'normal') as DebtPriority
+                        return (
+                      <tr key={r.id}>
+                        <td className="font-medium text-red-600">−{formatAmount(r.amount)} €</td>
+                        <td>{r.who}</td>
+                        <td>
+                          <span className="inline-flex items-center gap-1.5">
+                            {DEBT_PRIORITY_LABELS[p]}
+                            <span
+                              className={`inline-block w-3 h-3 rounded-sm shrink-0 ${DEBT_PRIORITY_COLORS[p]}`}
+                              title={DEBT_PRIORITY_LABELS[p]}
+                            />
+                          </span>
+                        </td>
+                        <td>{formatDate(r.returnDate)}</td>
+                        <td>
+                          {r.isMonthlyPayment && r.monthlyAmount != null ? (
+                            <span className="text-orange-600">{formatAmount(r.monthlyAmount)} €</span>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
+                        <td>
+                          <div className="flex gap-0.5 justify-end items-center">
+                          <button
+                            type="button"
+                            className="p-1 text-gray-500 hover:text-gray-700 cursor-pointer transition-colors"
+                            onClick={() => handlePotentialDebtEdit(r)}
+                            title="Редактировать"
+                          >
+                            <Pencil className="w-5 h-5" strokeWidth={2} />
+                          </button>
+                          <button
+                            type="button"
+                            className="p-1 text-red-600 hover:text-red-700 cursor-pointer transition-colors"
+                            onClick={() => handlePotentialDebtDelete(r.id)}
+                            title="Удалить"
+                          >
+                            <X className="w-6 h-6" strokeWidth={2.5} />
+                          </button>
+                          </div>
+                        </td>
+                      </tr>
+                      )})}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+            </>
+          )}
         </section>
 
         {/* Правая колонка: Аналитика + Доход */}
@@ -875,6 +1380,20 @@ export default function DebtsPage() {
                 <span className="text-[18px] font-bold text-red-600">
                   −{formatAmount(totalDebt)} €
                 </span>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[11px] text-gray-500 font-medium">Потенциальный долг</span>
+                <span className="text-[18px] font-bold text-gray-600">
+                  −{formatAmount(potentialDebtTotal)} €
+                </span>
+                <span className="text-xs text-gray-500">можно и не платить</span>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[11px] text-gray-500 font-medium">Желаемые расходы</span>
+                <span className="text-[18px] font-bold text-gray-600">
+                  −{formatAmount(desiredExpensesTotal)} €
+                </span>
+                <span className="text-xs text-gray-500">хотелось бы потратить</span>
               </div>
             </div>
           </div>
@@ -971,6 +1490,197 @@ export default function DebtsPage() {
                             >
                               <X className="w-6 h-6" strokeWidth={2.5} />
                             </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <h3 className="m-0 mb-4 text-sm font-semibold text-gray-600">Желаемые расходы</h3>
+            <p className="m-0 mb-4 text-gray-500 text-xs">
+              Деньги, которые хотелось бы потратить в будущем. Дата опциональна. Можно прожить и без этого.
+            </p>
+            <form
+              className="flex flex-col gap-4 mb-6"
+              onSubmit={handleDesiredExpenseSubmit}
+            >
+              <div className="flex flex-wrap items-end gap-4">
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="de-amount" className="text-sm font-medium text-gray-600">
+                    Сумма (€)
+                  </label>
+                  <input
+                    id="de-amount"
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    placeholder="15000"
+                    value={deAmount}
+                    onChange={(e) => setDeAmount(e.target.value)}
+                    className="py-2 px-3 border border-gray-200 rounded-md text-base min-w-[100px]"
+                    required
+                  />
+                </div>
+                <div className="flex flex-col gap-1 flex-1 min-w-[140px]">
+                  <label htmlFor="de-name" className="text-sm font-medium text-gray-600">
+                    Название
+                  </label>
+                  <input
+                    id="de-name"
+                    type="text"
+                    placeholder="Машина, отпуск..."
+                    value={deName}
+                    onChange={(e) => setDeName(e.target.value)}
+                    className="py-2 px-3 border border-gray-200 rounded-md text-base w-full"
+                    required
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="de-target-date" className="text-sm font-medium text-gray-600">
+                    Срок (опц.)
+                  </label>
+                  <input
+                    id="de-target-date"
+                    type="date"
+                    value={deTargetDate}
+                    onChange={(e) => setDeTargetDate(e.target.value)}
+                    className="py-2 px-3 border border-gray-200 rounded-md text-base min-w-[120px]"
+                  />
+                </div>
+                <div className="flex flex-col gap-1 flex-1 min-w-[120px]">
+                  <label htmlFor="de-notes" className="text-sm font-medium text-gray-600">
+                    Заметки (опц.)
+                  </label>
+                  <input
+                    id="de-notes"
+                    type="text"
+                    placeholder="..."
+                    value={deNotes}
+                    onChange={(e) => setDeNotes(e.target.value)}
+                    className="py-2 px-3 border border-gray-200 rounded-md text-base w-full"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-medium text-gray-600">Приоритет</span>
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="de-priority"
+                      checked={dePriority === 'low'}
+                      onChange={() => setDePriority('low')}
+                      className="w-3.5 h-3.5"
+                    />
+                    <span className="text-sm">Низкий</span>
+                    <span className="inline-block w-2.5 h-2.5 rounded-sm shrink-0 bg-gray-400" />
+                  </label>
+                  <label className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="de-priority"
+                      checked={dePriority === 'normal'}
+                      onChange={() => setDePriority('normal')}
+                      className="w-3.5 h-3.5"
+                    />
+                    <span className="text-sm">Обычный</span>
+                    <span className="inline-block w-2.5 h-2.5 rounded-sm shrink-0 bg-orange-500" />
+                  </label>
+                  <label className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="de-priority"
+                      checked={dePriority === 'high'}
+                      onChange={() => setDePriority('high')}
+                      className="w-3.5 h-3.5"
+                    />
+                    <span className="text-sm">Важный</span>
+                    <span className="inline-block w-2.5 h-2.5 rounded-sm shrink-0 bg-red-500" />
+                  </label>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  className="py-2 px-5 bg-blue-600 text-white border-none rounded-md font-medium text-sm cursor-pointer transition-colors hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed"
+                  disabled={deSubmitting}
+                >
+                  {deSubmitting ? 'Сохранение…' : editingDesiredExpenseId ? 'Сохранить' : 'Добавить'}
+                </button>
+                {editingDesiredExpenseId && (
+                  <button
+                    type="button"
+                    onClick={handleDesiredExpenseCancelEdit}
+                    className="py-2 px-4 border border-gray-300 rounded-md text-gray-600 text-sm font-medium cursor-pointer hover:bg-gray-50"
+                  >
+                    Отмена
+                  </button>
+                )}
+              </div>
+            </form>
+
+            <div>
+              <h4 className="m-0 mb-3 text-xs font-semibold text-gray-600">Список</h4>
+              {loading ? (
+                <p className="m-0 text-gray-500 text-sm">Загрузка…</p>
+              ) : desiredExpenses.length === 0 ? (
+                <p className="m-0 text-gray-500 text-sm">Пока нет записей.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse [&_th]:py-2 [&_th]:px-2 [&_th]:text-left [&_th]:border-b [&_th]:border-gray-200 [&_th]:font-semibold [&_th]:text-gray-600 [&_th]:text-xs [&_td]:py-2 [&_td]:px-2 [&_td]:border-b [&_td]:border-gray-200 [&_td:last-child]:text-right">
+                    <thead>
+                      <tr>
+                        <th>Сумма</th>
+                        <th>Название</th>
+                        <th>Приоритет</th>
+                        <th>Срок</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[...desiredExpenses]
+                        .sort(
+                          (a, b) =>
+                            PRIORITY_ORDER[(a.priority || 'normal') as PaymentPriority] -
+                            PRIORITY_ORDER[(b.priority || 'normal') as PaymentPriority],
+                        )
+                        .map((e) => (
+                        <tr key={e.id}>
+                          <td className="font-medium text-sm text-red-600">−{formatAmount(e.amount)} €</td>
+                          <td className="text-sm">{e.name}</td>
+                          <td>
+                            <span className="inline-flex items-center gap-1">
+                              <span
+                                className={`inline-block w-2.5 h-2.5 rounded-sm shrink-0 ${PRIORITY_COLORS[(e.priority || 'normal') as PaymentPriority]}`}
+                                title={PRIORITY_LABELS[(e.priority || 'normal') as PaymentPriority]}
+                              />
+                            </span>
+                          </td>
+                          <td className="text-sm">{formatDate(e.targetDate)}</td>
+                          <td>
+                            <div className="flex gap-0.5 justify-end items-center">
+                              <button
+                                type="button"
+                                className="p-1 text-gray-500 hover:text-gray-700 cursor-pointer transition-colors"
+                                onClick={() => handleDesiredExpenseEdit(e)}
+                                title="Редактировать"
+                              >
+                                <Pencil className="w-4 h-4" strokeWidth={2} />
+                              </button>
+                              <button
+                                type="button"
+                                className="p-1 text-red-600 hover:text-red-700 cursor-pointer transition-colors"
+                                onClick={() => handleDesiredExpenseDelete(e.id)}
+                                title="Удалить"
+                              >
+                                <X className="w-5 h-5" strokeWidth={2.5} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}

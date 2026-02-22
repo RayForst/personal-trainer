@@ -118,10 +118,10 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
       <main className="center-content flex-1 flex flex-col gap-6 p-6 overflow-y-auto min-w-0 w-full transition-[margin] duration-300 ease-in-out">
         {/* Сетка активности и тренировки за день: при выборе дня — две колонки 50/50 с плавной анимацией */}
         <section
-          className={`bg-white rounded-xl p-8 shadow-sm flex flex-col md:flex-row gap-4 items-stretch min-h-0 overflow-hidden ${selectedDate ? 'md:max-h-[calc(100vh-var(--header-height)-180px)]' : ''}`}
+          className="bg-white rounded-xl p-8 shadow-sm flex flex-col md:flex-row gap-4 items-stretch w-full"
         >
           <div
-            className={`min-w-0 flex flex-col overflow-y-auto shrink-0 transition-[flex-basis] duration-300 ease-out ${selectedDate ? 'basis-full md:basis-1/2' : 'basis-full'}`}
+            className={`min-w-0 flex flex-col transition-[flex-basis] duration-300 ease-out ${selectedDate ? 'basis-full md:basis-1/2' : 'basis-full'}`}
           >
             <div className="flex justify-between items-center mb-6 flex-wrap gap-4 shrink-0">
               <h2 className="m-0">История тренировок</h2>
@@ -157,27 +157,33 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
                     ЗАКРЫТЬ
                   </button>
                 </div>
-                {selectedDateWorkouts.length > 0 ? (
-                  <div className="p-4 flex-1 min-h-0 overflow-y-auto max-h-none">
-                    <WorkoutList
-                      initialWorkouts={selectedDateWorkouts}
-                      onWorkoutUpdate={handleWorkoutUpdate}
-                      onWorkoutDelete={handleWorkoutDelete}
-                      onWorkoutCopy={handleWorkoutCopy}
+                <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
+                  {selectedDateWorkouts.length > 0 ? (
+                    <div className="p-4 min-h-0 flex-shrink-0">
+                      <WorkoutList
+                        initialWorkouts={selectedDateWorkouts}
+                        onWorkoutUpdate={handleWorkoutUpdate}
+                        onWorkoutDelete={handleWorkoutDelete}
+                        onWorkoutCopy={handleWorkoutCopy}
+                      />
+                    </div>
+                  ) : (
+                    <div className="p-4 text-gray-500 text-[0.95rem] min-h-0 flex-shrink-0">
+                      <p className="m-0">В этот день тренировок не было</p>
+                    </div>
+                  )}
+                  <div className="p-4 pt-0 flex-shrink-0 border-t border-gray-100 mt-2">
+                    <WorkoutStats
+                      workouts={selectedDateWorkouts}
+                      selectedDate={selectedDate}
+                      compact
                     />
                   </div>
-                ) : (
-                  <div className="p-4 text-gray-500 text-[0.95rem] flex-1 min-h-0 overflow-y-auto max-h-none">
-                    <p className="m-0">В этот день тренировок не было</p>
-                  </div>
-                )}
+                </div>
               </div>
             )}
           </div>
         </section>
-
-        {/* Статистика дня */}
-        <WorkoutStats workouts={selectedDateWorkouts} selectedDate={selectedDate} />
       </main>
 
       {/* Модалка Добавить тренировку */}

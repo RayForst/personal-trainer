@@ -97,23 +97,30 @@ export default function WorkoutGrid({ workouts, onDaySelect }: WorkoutGridProps)
     return '#196127'
   }
 
-  // Цвет бордера для пропуска (травма и т.д.) — показываем обводкой 1px, а не заливкой
-  const getSkipBorderColor = (workouts: Workout[]): string | null => {
+  // Цвет фона для пропуска (заливка квадратика)
+  const getSkipBackgroundColor = (workouts: Workout[]): string => {
     const skipWorkouts = workouts.filter((workout) => workout.isSkip)
-    if (skipWorkouts.length === 0) return null
+    if (skipWorkouts.length === 0) return '#ebedf0'
     const skipColor = skipWorkouts[0].skipColor
     switch (skipColor) {
       case 'blue':
-        return '#007bff'
+        return '#b3d7ff'
       case 'red':
-        return '#dc3545'
+        return '#e57373'
       case 'orange':
-        return '#fd7e14'
+        return '#ffb74d'
       case 'yellow':
-        return '#ffc107'
+        return '#fff3cd'
       default:
-        return '#007bff'
+        return '#b3d7ff'
     }
+  }
+
+  // Есть ли и пропуск, и тренировки в один день — тогда делим ячейку на два сектора
+  const hasBothSkipAndWorkout = (workouts: Workout[]) => {
+    const hasSkip = workouts.some((w) => w.isSkip)
+    const hasWorkout = workouts.some((w) => !w.isSkip)
+    return hasSkip && hasWorkout
   }
 
   const getTooltipText = (day: (typeof days)[0]) => {
@@ -188,19 +195,39 @@ export default function WorkoutGrid({ workouts, onDaySelect }: WorkoutGridProps)
         <div className="flex gap-[3px] w-max">
           {weeks.map((week, weekIndex) => (
             <div key={weekIndex} className="flex flex-col gap-[3px] shrink-0">
-              {week.map((day, dayIndex) => (
-                <div
-                  key={`${day.date}-${dayIndex}`}
-                  className="w-16 h-16 min-w-16 min-h-16 rounded-sm border border-transparent transition-all duration-200 outline-none shrink-0 cursor-pointer hover:shadow-[inset_0_0_0_2px_#dc3545]"
-                  style={{
-                    backgroundColor: getIntensityColor(day.workouts),
-                    border: `1px solid ${getSkipBorderColor(day.workouts) ?? 'transparent'}`,
-                    cursor: 'pointer',
-                  }}
-                  title={getTooltipText(day)}
-                  onClick={() => onDaySelect(day.date)}
-                />
-              ))}
+              {week.map((day, dayIndex) => {
+                const isSplit = hasBothSkipAndWorkout(day.workouts)
+                return (
+                  <div
+                    key={`${day.date}-${dayIndex}`}
+                    className="w-16 h-16 min-w-16 min-h-16 rounded-sm overflow-hidden transition-all duration-200 outline-none shrink-0 cursor-pointer hover:shadow-[inset_0_0_0_2px_#dc3545] flex flex-col"
+                    title={getTooltipText(day)}
+                    onClick={() => onDaySelect(day.date)}
+                  >
+                    {isSplit ? (
+                      <>
+                        <div
+                          className="flex-1 min-h-0"
+                          style={{ backgroundColor: getSkipBackgroundColor(day.workouts) }}
+                        />
+                        <div
+                          className="flex-1 min-h-0"
+                          style={{ backgroundColor: getIntensityColor(day.workouts) }}
+                        />
+                      </>
+                    ) : (
+                      <div
+                        className="w-full h-full rounded-sm"
+                        style={{
+                          backgroundColor: day.workouts.some((w) => !w.isSkip)
+                            ? getIntensityColor(day.workouts)
+                            : getSkipBackgroundColor(day.workouts),
+                        }}
+                      />
+                    )}
+                  </div>
+                )
+              })}
             </div>
           ))}
         </div>

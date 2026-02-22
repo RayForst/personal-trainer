@@ -29,7 +29,9 @@ export async function GET() {
       lastBodyStateRes,
       lastBodyFatRes,
       debtsRes,
+      potentialDebtsRes,
       plannedPaymentsRes,
+      desiredExpensesRes,
       incomesRes,
     ] = await Promise.all([
         payload.find({
@@ -67,7 +69,15 @@ export async function GET() {
           limit: 10000,
         }),
         payload.find({
+          collection: 'potential-debts',
+          limit: 10000,
+        }),
+        payload.find({
           collection: 'planned-payments',
+          limit: 10000,
+        }),
+        payload.find({
+          collection: 'desired-expenses',
           limit: 10000,
         }),
         payload.find({
@@ -129,9 +139,26 @@ export async function GET() {
       return sum
     }, 0)
 
+    const potentialDebts = potentialDebtsRes.docs as Array<{
+      amount: number
+      isMonthlyPayment?: boolean
+      monthlyAmount?: number | null
+    }>
+    const potentialDebtTotal = potentialDebts.reduce((sum, d) => sum + (d.amount || 0), 0)
+    const potentialDebtMonthly = potentialDebts.reduce((sum, d) => {
+      if (d.isMonthlyPayment && d.monthlyAmount != null) return sum + d.monthlyAmount
+      return sum
+    }, 0)
+
     const plannedPayments = plannedPaymentsRes.docs as Array<{ amount: number }>
     const plannedPaymentsNextMonth = plannedPayments.reduce(
       (sum, p) => sum + (p.amount || 0),
+      0,
+    )
+
+    const desiredExpenses = desiredExpensesRes.docs as Array<{ amount: number }>
+    const desiredExpensesTotal = desiredExpenses.reduce(
+      (sum, e) => sum + (e.amount || 0),
       0,
     )
 
@@ -148,7 +175,10 @@ export async function GET() {
       currentBodyFat,
       monthlyDebt: Math.round(monthlyDebt * 100) / 100,
       totalDebt: Math.round(totalDebt * 100) / 100,
+      potentialDebtTotal: Math.round(potentialDebtTotal * 100) / 100,
+      potentialDebtMonthly: Math.round(potentialDebtMonthly * 100) / 100,
       plannedPaymentsNextMonth: Math.round(plannedPaymentsNextMonth * 100) / 100,
+      desiredExpensesTotal: Math.round(desiredExpensesTotal * 100) / 100,
       monthlyIncome: Math.round(monthlyIncome * 100) / 100,
     })
   } catch (error) {
