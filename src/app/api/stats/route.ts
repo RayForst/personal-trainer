@@ -26,6 +26,7 @@ export async function GET() {
       exercisesRes,
       workoutsRes,
       lastWorkoutRes,
+      lastBodyMeasurementsRes,
       lastBodyStateRes,
       lastBodyFatRes,
       debtsRes,
@@ -53,6 +54,11 @@ export async function GET() {
           where: {
             isSkip: { not_equals: true },
           },
+        }),
+        payload.find({
+          collection: 'body-measurements',
+          limit: 1,
+          sort: '-date',
         }),
         payload.find({
           collection: 'body-state',
@@ -116,17 +122,24 @@ export async function GET() {
       )
     }
 
+    const lastBody = lastBodyMeasurementsRes.docs[0] as
+      | { weight?: number; bodyFat?: number; date?: string }
+      | undefined
     const lastBodyState = lastBodyStateRes.docs[0] as
-      | { weight: number }
+      | { weight: number; date?: string }
       | undefined
-    const currentWeight =
-      lastBodyState?.weight != null ? lastBodyState.weight : null
-
     const lastBodyFat = lastBodyFatRes.docs[0] as
-      | { value: number }
+      | { value: number; date?: string }
       | undefined
-    const currentBodyFat =
-      lastBodyFat?.value != null ? lastBodyFat.value : null
+
+    let currentWeight: number | null = lastBody?.weight ?? null
+    let currentBodyFat: number | null = lastBody?.bodyFat ?? null
+    if (currentWeight == null && lastBodyState?.weight != null) {
+      currentWeight = lastBodyState.weight
+    }
+    if (currentBodyFat == null && lastBodyFat?.value != null) {
+      currentBodyFat = lastBodyFat.value
+    }
 
     const debts = debtsRes.docs as Array<{
       amount: number

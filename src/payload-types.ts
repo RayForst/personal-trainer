@@ -356,6 +356,14 @@ export interface BodyMeasurement {
    */
   date: string;
   /**
+   * Вес на дату замера
+   */
+  weight?: number | null;
+  /**
+   * Процент жира на дату замера
+   */
+  bodyFat?: number | null;
+  /**
    * Обхват шея, см
    */
   neck?: number | null;
@@ -839,6 +847,8 @@ export interface BodyFatSelect<T extends boolean = true> {
  */
 export interface BodyMeasurementsSelect<T extends boolean = true> {
   date?: T;
+  weight?: T;
+  bodyFat?: T;
   neck?: T;
   shoulders?: T;
   chest?: T;

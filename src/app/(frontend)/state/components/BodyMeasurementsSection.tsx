@@ -1,9 +1,14 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import { showToast } from '@/lib/toast'
 import { confirmAction } from '@/app/(frontend)/components/ConfirmDialog'
 import BodySilhouette from './BodySilhouette'
+
+interface BodyMeasurementsSectionProps {
+  date: string
+}
 
 const MEASUREMENT_FIELDS = [
   { key: 'neck', label: 'Шея' },
@@ -27,6 +32,8 @@ const PHOTO_SIDES = [
 export interface BodyMeasurementRecord {
   id: string
   date: string
+  weight?: number | null
+  bodyFat?: number | null
   neck?: number | null
   shoulders?: number | null
   chest?: number | null
@@ -65,8 +72,7 @@ function getMediaUrl(
   return m.url ?? null
 }
 
-export default function BodyMeasurementsSection() {
-  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0])
+export default function BodyMeasurementsSection({ date }: BodyMeasurementsSectionProps) {
   const [measurements, setMeasurements] = useState<Record<string, string>>({})
   const [measurementRecords, setMeasurementRecords] = useState<BodyMeasurementRecord[]>([])
   const [currentMeasurementId, setCurrentMeasurementId] = useState<string | null>(null)
@@ -76,6 +82,7 @@ export default function BodyMeasurementsSection() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [submittingPhotos, setSubmittingPhotos] = useState(false)
+  const [historyExpanded, setHistoryExpanded] = useState(false)
 
   const fetchData = async () => {
     try {
@@ -94,7 +101,10 @@ export default function BodyMeasurementsSection() {
         )
         if (forDate) {
           setCurrentMeasurementId(forDate.id)
-          const vals: Record<string, string> = {}
+          const vals: Record<string, string> = {
+            weight: forDate.weight != null ? String(forDate.weight) : '',
+            bodyFat: forDate.bodyFat != null ? String(forDate.bodyFat) : '',
+          }
           for (const f of MEASUREMENT_FIELDS) {
             const v = forDate[f.key]
             vals[f.key] = v != null ? String(v) : ''
@@ -102,9 +112,11 @@ export default function BodyMeasurementsSection() {
           setMeasurements(vals)
         } else {
           setCurrentMeasurementId(null)
-          setMeasurements(
-            Object.fromEntries(MEASUREMENT_FIELDS.map((f) => [f.key, ''])),
-          )
+          setMeasurements({
+            weight: '',
+            bodyFat: '',
+            ...Object.fromEntries(MEASUREMENT_FIELDS.map((f) => [f.key, ''])),
+          })
         }
       }
       if (resP.ok) {
@@ -141,6 +153,14 @@ export default function BodyMeasurementsSection() {
   const handleSaveMeasurements = async (e: React.FormEvent) => {
     e.preventDefault()
     const data: Record<string, number> = {}
+    const w = parseFloat(measurements.weight?.replace(',', '.') ?? '')
+    if (!Number.isNaN(w) && w >= 1 && w <= 500) {
+      data.weight = Math.round(w * 10) / 10
+    }
+    const bf = parseFloat(measurements.bodyFat?.replace(',', '.') ?? '')
+    if (!Number.isNaN(bf) && bf >= 0 && bf <= 100) {
+      data.bodyFat = Math.round(bf * 10) / 10
+    }
     for (const f of MEASUREMENT_FIELDS) {
       const v = parseFloat(measurements[f.key]?.replace(',', '.') ?? '')
       if (!Number.isNaN(v) && v >= 1 && v <= 300) {
@@ -148,7 +168,7 @@ export default function BodyMeasurementsSection() {
       }
     }
     if (Object.keys(data).length === 0 && !currentMeasurementId) {
-      showToast.error('Введите хотя бы одно измерение')
+      showToast.error('Введите хотя бы один показатель (вес, % жира или обхват)')
       return
     }
     setSubmitting(true)
@@ -266,21 +286,8 @@ export default function BodyMeasurementsSection() {
     'py-2 px-3 border border-gray-200 rounded-md text-base min-w-[80px] w-24'
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-1">
-        <label htmlFor="body-date" className="text-sm font-medium text-gray-600">
-          Дата
-        </label>
-        <input
-          id="body-date"
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className={inputCls}
-        />
-      </div>
-
-      <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-12">
         <div className="flex-1 min-w-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
@@ -344,9 +351,43 @@ export default function BodyMeasurementsSection() {
 
         <div>
           <h3 className="m-0 mb-4 text-base font-semibold text-gray-800">
-            Измерения (см)
+            Показатели и измерения
           </h3>
           <form onSubmit={handleSaveMeasurements} className="flex flex-col gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+              <div className="flex flex-col gap-1">
+                <label htmlFor="meas-weight" className="text-sm font-medium text-gray-600">
+                  Вес (кг)
+                </label>
+                <input
+                  id="meas-weight"
+                  type="number"
+                  step="0.1"
+                  min="1"
+                  max="500"
+                  placeholder="—"
+                  value={measurements.weight ?? ''}
+                  onChange={(e) => handleMeasurementChange('weight', e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label htmlFor="meas-bodyFat" className="text-sm font-medium text-gray-600">
+                  % жира
+                </label>
+                <input
+                  id="meas-bodyFat"
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="100"
+                  placeholder="—"
+                  value={measurements.bodyFat ?? ''}
+                  onChange={(e) => handleMeasurementChange('bodyFat', e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               {MEASUREMENT_FIELDS.map(({ key, label }) => (
                 <div key={key} className="flex flex-col gap-1">
@@ -391,32 +432,49 @@ export default function BodyMeasurementsSection() {
       </div>
 
       {!loading && measurementRecords.length > 0 && (
-        <div>
-          <h3 className="m-0 mb-4 text-base font-semibold text-gray-600">
-            История измерений
-          </h3>
-          <table className="w-full border-collapse [&_th]:py-2.5 [&_th]:px-3 [&_th]:text-left [&_th]:border-b [&_th]:border-gray-200 [&_th]:font-semibold [&_th]:text-gray-600 [&_th]:text-sm [&_td]:py-2.5 [&_td]:px-3 [&_td]:border-b [&_td]:border-gray-200">
-            <thead>
-              <tr>
-                <th>Дата</th>
-                <th>Талия</th>
-                <th>Грудь</th>
-                <th>Бёдра</th>
-                <th>Бицепс</th>
-              </tr>
-            </thead>
-            <tbody>
-              {measurementRecords.slice(0, 10).map((r) => (
-                <tr key={r.id}>
-                  <td>{formatDate(r.date)}</td>
-                  <td>{r.waist ?? '—'}</td>
-                  <td>{r.chest ?? '—'}</td>
-                  <td>{r.hips ?? '—'}</td>
-                  <td>{r.biceps ?? '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="border border-gray-200 rounded-lg overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setHistoryExpanded((v) => !v)}
+            className="w-full flex items-center justify-between gap-2 py-3 px-4 text-left bg-gray-50 hover:bg-gray-100 transition-colors"
+          >
+            <span className="font-semibold text-gray-700">История измерений</span>
+            {historyExpanded ? (
+              <ChevronUp className="w-5 h-5 text-gray-500 shrink-0" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-gray-500 shrink-0" />
+            )}
+          </button>
+          {historyExpanded && (
+            <div className="p-4">
+              <table className="w-full border-collapse [&_th]:py-2.5 [&_th]:px-3 [&_th]:text-left [&_th]:border-b [&_th]:border-gray-200 [&_th]:font-semibold [&_th]:text-gray-600 [&_th]:text-sm [&_td]:py-2.5 [&_td]:px-3 [&_td]:border-b [&_td]:border-gray-200">
+                <thead>
+                  <tr>
+                    <th>Дата</th>
+                    <th>Вес</th>
+                    <th>% жира</th>
+                    <th>Талия</th>
+                    <th>Грудь</th>
+                    <th>Бёдра</th>
+                    <th>Бицепс</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {measurementRecords.slice(0, 10).map((r) => (
+                    <tr key={r.id}>
+                      <td>{formatDate(r.date)}</td>
+                      <td>{r.weight != null ? r.weight : '—'}</td>
+                      <td>{r.bodyFat != null ? `${r.bodyFat}%` : '—'}</td>
+                      <td>{r.waist ?? '—'}</td>
+                      <td>{r.chest ?? '—'}</td>
+                      <td>{r.hips ?? '—'}</td>
+                      <td>{r.biceps ?? '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
     </div>

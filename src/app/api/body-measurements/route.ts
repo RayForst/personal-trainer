@@ -19,6 +19,18 @@ function parseMeasurement(value: unknown): number | null {
   return Number.isNaN(n) || n < 1 || n > 300 ? null : Math.round(n * 10) / 10
 }
 
+function parseWeight(value: unknown): number | null {
+  if (value == null || value === '') return null
+  const n = Number(value)
+  return Number.isNaN(n) || n < 1 || n > 500 ? null : Math.round(n * 10) / 10
+}
+
+function parseBodyFat(value: unknown): number | null {
+  if (value == null || value === '') return null
+  const n = Number(value)
+  return Number.isNaN(n) || n < 0 || n > 100 ? null : Math.round(n * 10) / 10
+}
+
 const MEASUREMENT_KEYS = [
   'neck',
   'shoulders',
@@ -66,6 +78,10 @@ export async function POST(request: NextRequest) {
     const date = body.date ?? new Date().toISOString().split('T')[0]
 
     const data: Record<string, unknown> = { date }
+    const weight = parseWeight(body.weight)
+    if (weight != null) data.weight = weight
+    const bodyFat = parseBodyFat(body.bodyFat)
+    if (bodyFat != null) data.bodyFat = bodyFat
     for (const key of MEASUREMENT_KEYS) {
       const val = parseMeasurement(body[key])
       if (val != null) {
