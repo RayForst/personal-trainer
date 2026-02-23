@@ -83,6 +83,7 @@ export interface Config {
     'planned-payments': PlannedPayment;
     'desired-expenses': DesiredExpense;
     incomes: Income;
+    courses: Course;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -105,6 +106,7 @@ export interface Config {
     'planned-payments': PlannedPaymentsSelect<false> | PlannedPaymentsSelect<true>;
     'desired-expenses': DesiredExpensesSelect<false> | DesiredExpensesSelect<true>;
     incomes: IncomesSelect<false> | IncomesSelect<true>;
+    courses: CoursesSelect<false> | CoursesSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -574,6 +576,40 @@ export interface Income {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "courses".
+ */
+export interface Course {
+  id: string;
+  title: string;
+  category: 'react' | 'redux' | 'git' | 'ui' | 'gamedev';
+  /**
+   * Формат H:MM:SS или MM:SS (например: 3:01:07, 29:55)
+   */
+  duration: string;
+  status: 'completed' | 'inProgress' | 'planned';
+  source: string;
+  /**
+   * URL на курс (YouTube, и т.д.)
+   */
+  link?: string | null;
+  description?: string | null;
+  /**
+   * Внешняя ссылка на картинку (альтернатива загрузке)
+   */
+  backgroundImageUrl?: string | null;
+  /**
+   * Изображение для фона карточки курса
+   */
+  backgroundImage?: (string | null) | Media;
+  /**
+   * Альтернатива изображению. Например: linear-gradient(135deg, #667eea 0%, #764ba2 100%)
+   */
+  backgroundGradient?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -642,6 +678,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'incomes';
         value: string | Income;
+      } | null)
+    | ({
+        relationTo: 'courses';
+        value: string | Course;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -935,6 +975,24 @@ export interface IncomesSelect<T extends boolean = true> {
   amount?: T;
   source?: T;
   receiptDate?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "courses_select".
+ */
+export interface CoursesSelect<T extends boolean = true> {
+  title?: T;
+  category?: T;
+  duration?: T;
+  status?: T;
+  source?: T;
+  link?: T;
+  description?: T;
+  backgroundImageUrl?: T;
+  backgroundImage?: T;
+  backgroundGradient?: T;
   updatedAt?: T;
   createdAt?: T;
 }

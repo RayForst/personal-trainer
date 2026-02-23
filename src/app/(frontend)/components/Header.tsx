@@ -101,6 +101,12 @@ export default function Header() {
           >
             Долги и платежи
           </button>
+          <button
+            onClick={() => router.push('/knowledges')}
+            className={`${navBtn} ${pathname === '/knowledges' ? navBtnActive : ''}`}
+          >
+            Знания
+          </button>
         </nav>
         {stats && (
           <div className="flex items-center gap-5 flex-1 justify-center">
