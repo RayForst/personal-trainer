@@ -76,6 +76,8 @@ export interface Config {
     exercises: Exercise;
     'body-state': BodyState;
     'body-fat': BodyFat;
+    'body-measurements': BodyMeasurement;
+    'body-photos': BodyPhoto;
     debts: Debt;
     'potential-debts': PotentialDebt;
     'planned-payments': PlannedPayment;
@@ -96,6 +98,8 @@ export interface Config {
     exercises: ExercisesSelect<false> | ExercisesSelect<true>;
     'body-state': BodyStateSelect<false> | BodyStateSelect<true>;
     'body-fat': BodyFatSelect<false> | BodyFatSelect<true>;
+    'body-measurements': BodyMeasurementsSelect<false> | BodyMeasurementsSelect<true>;
+    'body-photos': BodyPhotosSelect<false> | BodyPhotosSelect<true>;
     debts: DebtsSelect<false> | DebtsSelect<true>;
     'potential-debts': PotentialDebtsSelect<false> | PotentialDebtsSelect<true>;
     'planned-payments': PlannedPaymentsSelect<false> | PlannedPaymentsSelect<true>;
@@ -343,6 +347,84 @@ export interface BodyFat {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "body-measurements".
+ */
+export interface BodyMeasurement {
+  id: string;
+  /**
+   * Дата замера
+   */
+  date: string;
+  /**
+   * Обхват шея, см
+   */
+  neck?: number | null;
+  /**
+   * Обхват плечи, см
+   */
+  shoulders?: number | null;
+  /**
+   * Обхват грудь, см
+   */
+  chest?: number | null;
+  /**
+   * Обхват талия, см
+   */
+  waist?: number | null;
+  /**
+   * Обхват бёдра, см
+   */
+  hips?: number | null;
+  /**
+   * Обхват бицепс, см
+   */
+  biceps?: number | null;
+  /**
+   * Обхват предплечье, см
+   */
+  forearm?: number | null;
+  /**
+   * Обхват бедро, см
+   */
+  thigh?: number | null;
+  /**
+   * Обхват голень, см
+   */
+  calf?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "body-photos".
+ */
+export interface BodyPhoto {
+  id: string;
+  /**
+   * Дата съёмки
+   */
+  date: string;
+  /**
+   * Фото спереди
+   */
+  front?: (string | null) | Media;
+  /**
+   * Фото сзади
+   */
+  back?: (string | null) | Media;
+  /**
+   * Фото слева
+   */
+  left?: (string | null) | Media;
+  /**
+   * Фото справа
+   */
+  right?: (string | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "debts".
  */
 export interface Debt {
@@ -524,6 +606,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'body-fat';
         value: string | BodyFat;
+      } | null)
+    | ({
+        relationTo: 'body-measurements';
+        value: string | BodyMeasurement;
+      } | null)
+    | ({
+        relationTo: 'body-photos';
+        value: string | BodyPhoto;
       } | null)
     | ({
         relationTo: 'debts';
@@ -740,6 +830,37 @@ export interface BodyStateSelect<T extends boolean = true> {
 export interface BodyFatSelect<T extends boolean = true> {
   value?: T;
   date?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "body-measurements_select".
+ */
+export interface BodyMeasurementsSelect<T extends boolean = true> {
+  date?: T;
+  neck?: T;
+  shoulders?: T;
+  chest?: T;
+  waist?: T;
+  hips?: T;
+  biceps?: T;
+  forearm?: T;
+  thigh?: T;
+  calf?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "body-photos_select".
+ */
+export interface BodyPhotosSelect<T extends boolean = true> {
+  date?: T;
+  front?: T;
+  back?: T;
+  left?: T;
+  right?: T;
   updatedAt?: T;
   createdAt?: T;
 }

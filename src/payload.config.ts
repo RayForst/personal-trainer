@@ -16,6 +16,8 @@ import { GoalActivityRecords } from './collections/GoalActivityRecords'
 import { Exercises } from './collections/Exercises'
 import { BodyState } from './collections/BodyState'
 import { BodyFat } from './collections/BodyFat'
+import { BodyMeasurements } from './collections/BodyMeasurements'
+import { BodyPhotos } from './collections/BodyPhotos'
 import { Debts } from './collections/Debts'
 import { PotentialDebts } from './collections/PotentialDebts'
 import { PlannedPayments } from './collections/PlannedPayments'
@@ -32,7 +34,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Workouts, WorkoutTemplates, Goals, GoalActivityRecords, Exercises, BodyState, BodyFat, Debts, PotentialDebts, PlannedPayments, DesiredExpenses, Incomes],
+  collections: [Users, Media, Workouts, WorkoutTemplates, Goals, GoalActivityRecords, Exercises, BodyState, BodyFat, BodyMeasurements, BodyPhotos, Debts, PotentialDebts, PlannedPayments, DesiredExpenses, Incomes],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
