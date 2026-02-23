@@ -78,6 +78,89 @@ body {
   max-height: none;
 }
 
+/* Body3D — тёмный фон и эффект экрана (как .App:after в pet) */
+.body3d-container {
+  background-color: rgb(18, 27, 20);
+  background-image: linear-gradient(transparent 50%, rgba(10, 15, 8, 0.1) 50%),
+    radial-gradient(transparent 65%, rgba(2, 10, 1, 0.6) 100%);
+  background-size: 4px 4px, 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Бегущая полоска — помехи на старом экране (как pet .App:after) */
+.body3d-scanline {
+  content: " ";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 120px;
+  opacity: 1;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  background-color: black;
+  background-image: linear-gradient(transparent 50%, rgba(0, 0, 0, 0.5) 50%),
+    linear-gradient(to top, rgba(5, 15, 5, 1), rgba(0, 0, 0, 0) 110%);
+  background-size: 15px 15px, 100%;
+  animation: body3d-scan 3.5s linear infinite, body3d-blink 0.6s infinite;
+  z-index: 30;
+}
+
+@keyframes body3d-scan {
+  0% {
+    top: -120px;
+  }
+  100% {
+    top: 100%;
+  }
+}
+
+@keyframes body3d-blink {
+  0% {
+    opacity: 0.7;
+  }
+  15% {
+    opacity: 0.4;
+  }
+  20% {
+    opacity: 0.7;
+  }
+  23% {
+    opacity: 0.3;
+  }
+  27% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  60% {
+    opacity: 0.5;
+  }
+  61% {
+    opacity: 0.8;
+  }
+  62% {
+    opacity: 0.6;
+  }
+  67% {
+    opacity: 0.7;
+  }
+  69% {
+    opacity: 0.4;
+  }
+  77% {
+    opacity: 0.7;
+  }
+  80% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0.7;
+  }
+}
+
 .workout-edit-fields {
   background: var(--color-bg);
   border: 1px solid var(--color-border);

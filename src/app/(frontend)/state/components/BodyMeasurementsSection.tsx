@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { showToast } from '@/lib/toast'
 import { confirmAction } from '@/app/(frontend)/components/ConfirmDialog'
-import BodySilhouette from './BodySilhouette'
 
 interface BodyMeasurementsSectionProps {
   date: string
@@ -267,29 +266,16 @@ export default function BodyMeasurementsSection({ date }: BodyMeasurementsSectio
     }
   }
 
-  const currentRecord = measurementRecords.find(
-    (r) => new Date(r.date).toISOString().split('T')[0] === date,
-  )
   const currentPhotoRecord = photoRecords.find(
     (r) => new Date(r.date).toISOString().split('T')[0] === date,
   )
-
-  const measurementValues: Record<string, number> = {}
-  for (const f of MEASUREMENT_FIELDS) {
-    const v = currentRecord?.[f.key] ?? parseFloat(measurements[f.key]?.replace(',', '.') ?? '')
-    if (typeof v === 'number' && !Number.isNaN(v)) {
-      measurementValues[f.key] = v
-    }
-  }
 
   const inputCls =
     'py-2 px-3 border border-gray-200 rounded-md text-base min-w-[80px] w-24'
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col lg:flex-row gap-6 lg:gap-12">
-        <div className="flex-1 min-w-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
               <h3 className="m-0 mb-4 text-base font-semibold text-gray-800">
                 Фото (4 ракурса)
@@ -419,15 +405,6 @@ export default function BodyMeasurementsSection({ date }: BodyMeasurementsSectio
               {submitting ? 'Сохранение…' : 'Сохранить измерения'}
             </button>
           </form>
-        </div>
-          </div>
-        </div>
-
-        <div className="lg:w-[320px] xl:w-[400px] shrink-0 lg:sticky lg:top-[calc(var(--header-height)+1.5rem)] lg:self-start">
-          <h3 className="m-0 mb-4 text-base font-semibold text-gray-800">
-            Визуализация
-          </h3>
-          <BodySilhouette measurements={measurementValues} />
         </div>
       </div>
 
