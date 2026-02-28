@@ -96,6 +96,39 @@ export async function GET(request: NextRequest) {
     const payload = await getPayload({ config })
     const { searchParams } = new URL(request.url)
     const date = searchParams.get('date')
+    const format = searchParams.get('format')
+
+    if (format === 'history') {
+      const [workoutsRes, allRes] = await Promise.all([
+        payload.find({
+          collection: 'workouts',
+          sort: '-date',
+          limit: 1000,
+        }),
+        payload.find({
+          collection: 'workouts',
+          sort: '-createdAt',
+          limit: 1000,
+          where: { isSkip: { not_equals: true } },
+        }),
+      ])
+      const workoutMap = new Map()
+      allRes.docs.forEach((w: any) => {
+        if (
+          !workoutMap.has(w.name) ||
+          new Date(w.date) > new Date(workoutMap.get(w.name).date)
+        ) {
+          workoutMap.set(w.name, w)
+        }
+      })
+      const recentWorkouts = Array.from(workoutMap.values())
+        .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 10)
+      return NextResponse.json({
+        workouts: workoutsRes.docs,
+        recentWorkouts,
+      })
+    }
 
     const query: any = {
       collection: 'workouts',

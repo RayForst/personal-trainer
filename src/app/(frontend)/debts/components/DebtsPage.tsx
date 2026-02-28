@@ -132,7 +132,7 @@ export default function DebtsPage() {
   const [incomes, setIncomes] = useState<IncomeRecord[]>([])
   const [incAmount, setIncAmount] = useState('')
   const [incSource, setIncSource] = useState('')
-  const [incDate, setIncDate] = useState('')
+  const [incDay, setIncDay] = useState('')
   const [incSubmitting, setIncSubmitting] = useState(false)
   const [editingDebtId, setEditingDebtId] = useState<string | null>(null)
   const [potentialDebts, setPotentialDebts] = useState<PotentialDebtRecord[]>([])
@@ -607,6 +607,12 @@ export default function DebtsPage() {
       showToast.error('Укажите источник дохода')
       return
     }
+    const dayNum = incDay.trim() ? parseInt(incDay, 10) : null
+    const receiptDate =
+      dayNum != null && dayNum >= 1 && dayNum <= 31
+        ? `${year}-${String(month).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`
+        : undefined
+
     setIncSubmitting(true)
     try {
       const res = await fetch('/api/incomes', {
@@ -615,7 +621,7 @@ export default function DebtsPage() {
         body: JSON.stringify({
           amount: a,
           source: sourceTrimmed,
-          receiptDate: incDate || undefined,
+          receiptDate,
         }),
       })
       const data = await res.json()
@@ -623,7 +629,7 @@ export default function DebtsPage() {
         showToast.success('Доход добавлен')
         setIncAmount('')
         setIncSource('')
-        setIncDate('')
+        setIncDay('')
         setIncomes((prev) => [data, ...prev])
       } else {
         showToast.error(data.error || 'Ошибка сохранения')
@@ -1555,7 +1561,7 @@ export default function DebtsPage() {
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
             <h3 className="m-0 mb-4 text-sm font-semibold text-gray-600">Доход</h3>
             <p className="m-0 mb-4 text-gray-500 text-xs">
-              Планируемые доходы — каждый месяц. Укажите день, когда приходит доход.
+              Планируемые доходы за {MONTH_NAMES[month - 1]} {year}. Укажите день получения.
             </p>
             <form
               className="flex flex-wrap items-end gap-4 mb-6"
@@ -1592,15 +1598,18 @@ export default function DebtsPage() {
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label htmlFor="inc-date" className="text-sm font-medium text-gray-600">
-                  Дата получения
+                <label htmlFor="inc-day" className="text-sm font-medium text-gray-600">
+                  День ({MONTH_NAMES[month - 1]})
                 </label>
                 <input
-                  id="inc-date"
-                  type="date"
-                  value={incDate}
-                  onChange={(e) => setIncDate(e.target.value)}
-                  className="py-2 px-3 border border-gray-200 rounded-md text-base min-w-[140px]"
+                  id="inc-day"
+                  type="number"
+                  min={1}
+                  max={31}
+                  placeholder="1–31"
+                  value={incDay}
+                  onChange={(e) => setIncDay(e.target.value)}
+                  className="py-2 px-3 border border-gray-200 rounded-md text-base min-w-[80px]"
                 />
               </div>
               <button

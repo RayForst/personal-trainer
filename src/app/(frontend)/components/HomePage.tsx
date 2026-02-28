@@ -11,9 +11,11 @@ import type { Workout } from '@/payload-types'
 interface HomePageProps {
   initialWorkouts: Workout[]
   recentWorkouts: Workout[]
+  /** Встроенный режим — без внешней обёртки (для вкладок) */
+  embedded?: boolean
 }
 
-export default function HomePage({ initialWorkouts, recentWorkouts }: HomePageProps) {
+export default function HomePage({ initialWorkouts, recentWorkouts, embedded = false }: HomePageProps) {
   const router = useRouter()
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedDateWorkouts, setSelectedDateWorkouts] = useState<Workout[]>([])
@@ -112,8 +114,8 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
     })
   }
 
-  return (
-    <div className="triptych-container relative flex w-full h-[calc(100vh-var(--header-height))] mt-[var(--header-height)] overflow-hidden">
+  const content = (
+    <>
       {/* Центральная часть - История и статистика */}
       <main className="center-content flex-1 flex flex-col gap-6 p-6 overflow-y-auto min-w-0 w-full transition-[margin] duration-300 ease-in-out">
         {/* Сетка активности и тренировки за день: при выборе дня — две колонки 50/50 с плавной анимацией */}
@@ -224,6 +226,16 @@ export default function HomePage({ initialWorkouts, recentWorkouts }: HomePagePr
           </div>
         </div>
       )}
+    </>
+  )
+
+  if (embedded) {
+    return <div className="flex-1 flex flex-col min-h-0 overflow-hidden">{content}</div>
+  }
+
+  return (
+    <div className="triptych-container relative flex w-full h-[calc(100vh-var(--header-height))] mt-[var(--header-height)] overflow-hidden">
+      {content}
     </div>
   )
 }

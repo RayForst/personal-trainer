@@ -93,22 +93,16 @@ export default function Header() {
       <div className="max-w-full mx-auto h-full flex items-center justify-between px-6">
         <nav className="flex gap-2">
           <button
-            onClick={() => navWithMonth('/')}
-            className={`${navBtn} ${pathname === '/' ? navBtnActive : ''}`}
+            onClick={() => navWithMonth('/state')}
+            className={`${navBtn} ${pathname === '/state' ? navBtnActive : ''}`}
           >
-            История
+            Моё состояние
           </button>
           <button
             onClick={() => navWithMonth('/goals')}
             className={`${navBtn} ${pathname === '/goals' ? navBtnActive : ''}`}
           >
             Цели
-          </button>
-          <button
-            onClick={() => navWithMonth('/state')}
-            className={`${navBtn} ${pathname === '/state' ? navBtnActive : ''}`}
-          >
-            Моё состояние
           </button>
           <button
             onClick={() => navWithMonth('/debts')}

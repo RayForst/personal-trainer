@@ -6,12 +6,14 @@ import BodyMeasurementsSection from './BodyMeasurementsSection'
 import Body3DModel from './Body3D/Body3DModel'
 import ExerciseChart from '../../components/ExerciseChart'
 import ExercisesPage from '../../exercises/components/ExercisesPage'
+import HomePage from '../../components/HomePage'
 import type { Workout } from '@/payload-types'
 
-type TabId = 'state' | 'progress' | 'exercises'
+type TabId = 'state' | 'progress' | 'exercises' | 'history'
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'state', label: 'Моё состояние' },
+  { id: 'history', label: 'История' },
   { id: 'progress', label: 'Прогресс' },
   { id: 'exercises', label: 'Упражнения' },
 ]
@@ -26,6 +28,9 @@ export default function StatePage() {
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0])
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [workoutsLoading, setWorkoutsLoading] = useState(false)
+  const [historyWorkouts, setHistoryWorkouts] = useState<Workout[]>([])
+  const [historyRecentWorkouts, setHistoryRecentWorkouts] = useState<Workout[]>([])
+  const [historyLoading, setHistoryLoading] = useState(false)
 
   const setTab = (tab: TabId) => {
     if (tab === 'state') {
@@ -45,6 +50,23 @@ export default function StatePage() {
         })
         .catch(() => setWorkouts([]))
         .finally(() => setWorkoutsLoading(false))
+    }
+  }, [activeTab])
+
+  useEffect(() => {
+    if (activeTab === 'history') {
+      setHistoryLoading(true)
+      fetch('/api/workouts?format=history')
+        .then((res) => (res.ok ? res.json() : { workouts: [], recentWorkouts: [] }))
+        .then((data) => {
+          setHistoryWorkouts(data.workouts || [])
+          setHistoryRecentWorkouts(data.recentWorkouts || [])
+        })
+        .catch(() => {
+          setHistoryWorkouts([])
+          setHistoryRecentWorkouts([])
+        })
+        .finally(() => setHistoryLoading(false))
     }
   }, [activeTab])
 
@@ -119,6 +141,22 @@ export default function StatePage() {
               </div>
             ) : (
               <ExerciseChart workouts={workouts} />
+            )}
+          </main>
+        )}
+
+        {activeTab === 'history' && (
+          <main className="center-content flex-1 flex flex-col gap-6 p-6 overflow-y-auto min-w-0 w-full h-full">
+            {historyLoading ? (
+              <div className="flex-1 flex items-center justify-center text-gray-500">
+                Загрузка...
+              </div>
+            ) : (
+              <HomePage
+                initialWorkouts={historyWorkouts}
+                recentWorkouts={historyRecentWorkouts}
+                embedded
+              />
             )}
           </main>
         )}
