@@ -13,7 +13,7 @@ async function checkAuth(): Promise<boolean> {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const authenticated = await checkAuth()
   if (!authenticated) {
     return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
@@ -26,6 +26,22 @@ export async function GET() {
       sort: 'source',
       limit: 500,
     })
+    const { searchParams } = new URL(request.url)
+    const monthParam = searchParams.get('month')
+    const yearParam = searchParams.get('year')
+    if (monthParam != null && yearParam != null) {
+      const filterMonth = parseInt(monthParam, 10)
+      const filterYear = parseInt(yearParam, 10)
+      const filtered = {
+        ...result,
+        docs: result.docs.filter((doc: { receiptDate?: string | null }) => {
+          if (doc.receiptDate == null) return true
+          const d = new Date(doc.receiptDate)
+          return d.getMonth() + 1 === filterMonth && d.getFullYear() === filterYear
+        }),
+      }
+      return NextResponse.json(filtered)
+    }
     return NextResponse.json(result)
   } catch (error) {
     console.error('Error fetching incomes:', error)

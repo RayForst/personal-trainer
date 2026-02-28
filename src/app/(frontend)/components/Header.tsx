@@ -1,35 +1,45 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import React, { useEffect, useState, useCallback } from 'react'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { LogOut } from 'lucide-react'
 
+const MONTH_NAMES = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
+
 interface HeaderStats {
-  exercisesCount: number
   workoutsCount: number
-  maxWeight: number
-  totalVolume: number
   daysSinceLastWorkout: number | null
   currentWeight: number | null
   currentBodyFat: number | null
   monthlyDebt: number
+  monthlyDebtBreakdown?: Array<{ who: string; monthlyAmount: number }>
+  plannedPaymentsBreakdown?: Array<{ name: string; amount: number }>
   totalDebt: number
   plannedPaymentsNextMonth: number
+  potentialDebtTotal: number
+  desiredExpensesTotal: number
   monthlyIncome: number
-}
-
-function formatVolume(n: number): string {
-  return n.toLocaleString('ru-RU').replace(/\s/g, ' ')
 }
 
 export default function Header() {
   const router = useRouter()
   const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [stats, setStats] = useState<HeaderStats | null>(null)
+
+  const monthParam = searchParams.get('month')
+  const yearParam = searchParams.get('year')
+  const now = new Date()
+  const currentMonth = monthParam != null ? parseInt(monthParam, 10) : now.getMonth() + 1
+  const currentYear = yearParam != null ? parseInt(yearParam, 10) : now.getFullYear()
+
+  const statsMonth = currentMonth
+  const statsYear = currentYear
 
   useEffect(() => {
     let cancelled = false
-    fetch('/api/stats')
+    const url = `/api/stats?month=${statsMonth}&year=${statsYear}`
+    fetch(url)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!cancelled && data) setStats(data)
@@ -38,7 +48,24 @@ export default function Header() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [statsMonth, statsYear])
+
+  const setMonthYear = useCallback(
+    (month: number, year: number) => {
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('month', String(month))
+      params.set('year', String(year))
+      router.push(`${pathname}?${params.toString()}`)
+    },
+    [pathname, router, searchParams],
+  )
+
+  const navWithMonth = (path: string) => {
+    const params = new URLSearchParams()
+    params.set('month', String(currentMonth))
+    params.set('year', String(currentYear))
+    router.push(`${path}?${params.toString()}`)
+  }
 
   const handleLogout = async () => {
     try {
@@ -66,67 +93,66 @@ export default function Header() {
       <div className="max-w-full mx-auto h-full flex items-center justify-between px-6">
         <nav className="flex gap-2">
           <button
-            onClick={() => router.push('/')}
+            onClick={() => navWithMonth('/')}
             className={`${navBtn} ${pathname === '/' ? navBtnActive : ''}`}
           >
             История
           </button>
           <button
-            onClick={() => router.push('/progress')}
-            className={`${navBtn} ${pathname === '/progress' ? navBtnActive : ''}`}
-          >
-            Прогресс
-          </button>
-          <button
-            onClick={() => router.push('/goals')}
+            onClick={() => navWithMonth('/goals')}
             className={`${navBtn} ${pathname === '/goals' ? navBtnActive : ''}`}
           >
             Цели
           </button>
           <button
-            onClick={() => router.push('/exercises')}
-            className={`${navBtn} ${pathname === '/exercises' ? navBtnActive : ''}`}
-          >
-            Упражнения
-          </button>
-          <button
-            onClick={() => router.push('/state')}
+            onClick={() => navWithMonth('/state')}
             className={`${navBtn} ${pathname === '/state' ? navBtnActive : ''}`}
           >
             Моё состояние
           </button>
           <button
-            onClick={() => router.push('/debts')}
+            onClick={() => navWithMonth('/debts')}
             className={`${navBtn} ${pathname === '/debts' ? navBtnActive : ''}`}
           >
             Долги и платежи
           </button>
           <button
-            onClick={() => router.push('/knowledges')}
+            onClick={() => navWithMonth('/knowledges')}
             className={`${navBtn} ${pathname === '/knowledges' ? navBtnActive : ''}`}
           >
             Знания
           </button>
         </nav>
-        {stats && (
-          <div className="flex items-center gap-5 flex-1 justify-center">
-            <div className="flex flex-col items-center gap-0.5">
-              <span className="text-[11px] text-gray-500 font-medium">Упражнений:</span>
-              <span className="text-[15px] font-bold text-gray-800">{stats.exercisesCount}</span>
-            </div>
+        <div className="flex items-center gap-6 flex-1 justify-center flex-wrap">
+          <div className="flex items-center gap-2">
+            <select
+              value={currentMonth}
+              onChange={(e) => setMonthYear(parseInt(e.target.value, 10), currentYear)}
+              className="py-1.5 px-2 border border-gray-200 rounded-md text-sm font-medium text-gray-700 bg-white cursor-pointer"
+            >
+              {MONTH_NAMES.map((name, i) => (
+                <option key={name} value={i + 1}>
+                  {name}
+                </option>
+              ))}
+            </select>
+            <select
+              value={currentYear}
+              onChange={(e) => setMonthYear(currentMonth, parseInt(e.target.value, 10))}
+              className="py-1.5 px-2 border border-gray-200 rounded-md text-sm font-medium text-gray-700 bg-white cursor-pointer"
+            >
+              {Array.from({ length: 11 }, (_, i) => now.getFullYear() - 5 + i).map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+          </div>
+          {stats && (
+          <div className="flex items-center gap-5 flex-wrap">
             <div className="flex flex-col items-center gap-0.5">
               <span className="text-[11px] text-gray-500 font-medium">Тренировок:</span>
               <span className="text-[15px] font-bold text-gray-800">{stats.workoutsCount}</span>
-            </div>
-            <div className="flex flex-col items-center gap-0.5">
-              <span className="text-[11px] text-gray-500 font-medium">Лучший вес:</span>
-              <span className="text-[15px] font-bold text-gray-800">{stats.maxWeight} кг</span>
-            </div>
-            <div className="flex flex-col items-center gap-0.5">
-              <span className="text-[11px] text-gray-500 font-medium">Общий объём:</span>
-              <span className="text-[15px] font-bold text-gray-800">
-                {formatVolume(stats.totalVolume)} кг
-              </span>
             </div>
             <div className="flex flex-col items-center gap-0.5">
               <span className="text-[11px] text-gray-500 font-medium">Последняя тренировка:</span>
@@ -148,9 +174,9 @@ export default function Header() {
                 {stats.currentBodyFat != null ? ` (${stats.currentBodyFat}%)` : ''}
               </span>
             </div>
-            <div className="flex flex-col items-center gap-0.5">
+            <div className="relative flex flex-col items-center gap-0.5 group">
               <span className="text-[11px] text-gray-500 font-medium">Месячный расход:</span>
-              <span className="text-[15px] font-bold text-red-600">
+              <span className="text-[15px] font-bold text-red-600 cursor-help">
                 −{' '}
                 {((stats.monthlyDebt ?? 0) + (stats.plannedPaymentsNextMonth ?? 0)).toLocaleString('ru-RU', {
                   minimumFractionDigits: 0,
@@ -158,6 +184,31 @@ export default function Header() {
                 })}{' '}
                 €
               </span>
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 pt-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-150 z-[1100]">
+                <div className="bg-gray-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg min-w-[300px] w-max max-h-[240px] overflow-y-auto">
+                  <div className="font-medium text-gray-200 mb-1 whitespace-nowrap">Долги (ежемес. платежи):</div>
+                  {(stats.monthlyDebtBreakdown?.length ?? 0) > 0 ? (
+                    stats.monthlyDebtBreakdown!.map((d, i) => (
+                      <div key={i} className="text-gray-300 pl-2 whitespace-nowrap">
+                        {d.who}: −{d.monthlyAmount.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} €
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-gray-500 pl-2">—</div>
+                  )}
+                  <div className="font-medium text-gray-200 mt-2 mb-1 whitespace-nowrap">Планируемые платежи:</div>
+                  {(stats.plannedPaymentsBreakdown?.length ?? 0) > 0 ? (
+                    stats.plannedPaymentsBreakdown!.map((p, i) => (
+                      <div key={i} className="text-gray-300 pl-2 whitespace-nowrap">
+                        {p.name}: −{p.amount.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} €
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-gray-500 pl-2">—</div>
+                  )}
+                  <div className="border-t border-gray-600 mt-2 pt-2 font-medium whitespace-nowrap">Итого: −{((stats.monthlyDebt ?? 0) + (stats.plannedPaymentsNextMonth ?? 0)).toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} €</div>
+                </div>
+              </div>
             </div>
             <div className="flex flex-col items-center gap-0.5">
               <span className="text-[11px] text-gray-500 font-medium">Месячный доход:</span>
@@ -180,8 +231,29 @@ export default function Header() {
                 €
               </span>
             </div>
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-[11px] text-gray-500 font-medium">Потенц. долг:</span>
+              <span className="text-[15px] font-bold text-gray-600">
+                −{(stats.potentialDebtTotal ?? 0).toLocaleString('ru-RU', {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                })}{' '}
+                €
+              </span>
+            </div>
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-[11px] text-gray-500 font-medium">Желаемые расх.:</span>
+              <span className="text-[15px] font-bold text-gray-600">
+                −{(stats.desiredExpensesTotal ?? 0).toLocaleString('ru-RU', {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                })}{' '}
+                €
+              </span>
+            </div>
           </div>
-        )}
+          )}
+        </div>
         <div className="flex gap-3">
           <button
             onClick={handleLogout}

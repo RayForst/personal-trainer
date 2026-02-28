@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import './styles.css'
 import { Toaster } from './components/Toaster'
 import Header from './components/Header'
@@ -14,7 +14,9 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <Header />
+        <Suspense fallback={<header className="h-[var(--header-height)] border-b border-gray-200" />}>
+          <Header />
+        </Suspense>
         <main>{children}</main>
         <Toaster />
       </body>

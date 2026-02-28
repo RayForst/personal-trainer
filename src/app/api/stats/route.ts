@@ -1,5 +1,5 @@
 import { getPayload } from 'payload'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import config from '@/payload.config'
 
@@ -13,7 +13,7 @@ async function checkAuth(): Promise<boolean> {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const authenticated = await checkAuth()
   if (!authenticated) {
     return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
@@ -141,31 +141,115 @@ export async function GET() {
       currentBodyFat = lastBodyFat.value
     }
 
+    const { searchParams } = new URL(request.url)
+    const monthParam = searchParams.get('month')
+    const yearParam = searchParams.get('year')
+    const filterByMonth = monthParam != null && yearParam != null
+    const filterMonth = monthParam != null ? parseInt(monthParam, 10) : 0
+    const filterYear = yearParam != null ? parseInt(yearParam, 10) : 0
+
+    const getMonthsPaid = (startDate: string | null | undefined) => {
+      if (!filterByMonth || !startDate) return 0
+      const d = new Date(startDate)
+      return Math.max(0, (filterYear - d.getFullYear()) * 12 + (filterMonth - (d.getMonth() + 1)))
+    }
+
+    const debtActiveInMonth = (d: {
+      returnDate?: string | null
+      createdAt?: string
+      isMonthlyPayment?: boolean
+      monthlyAmount?: number | null
+      amount?: number
+    }) => {
+      if (!filterByMonth) return true
+      if (d.isMonthlyPayment && d.monthlyAmount != null) {
+        const startDate = d.returnDate || d.createdAt
+        if (!startDate) return true
+        const startD = new Date(startDate)
+        const startYear = startD.getFullYear()
+        const startMonth = startD.getMonth() + 1
+        if (filterYear < startYear || (filterYear === startYear && filterMonth < startMonth))
+          return false
+        const monthsPaid = getMonthsPaid(startDate)
+        const remaining = Math.max(0, (d.amount || 0) - monthsPaid * d.monthlyAmount)
+        return remaining > 0
+      }
+      if (d.returnDate == null) return true
+      const date = new Date(d.returnDate)
+      const monthStart = new Date(filterYear, filterMonth - 1, 1)
+      const monthEnd = new Date(filterYear, filterMonth, 1)
+      return date >= monthStart && date < monthEnd
+    }
+
+    const getDisplayAmount = (
+      d: { amount?: number; isMonthlyPayment?: boolean; monthlyAmount?: number | null },
+      monthsPaid: number,
+    ) => {
+      if (d.isMonthlyPayment && d.monthlyAmount != null) {
+        return Math.max(0, (d.amount || 0) - monthsPaid * d.monthlyAmount)
+      }
+      return d.amount || 0
+    }
+
+    const getMonthlyTotal = (
+      d: { amount?: number; isMonthlyPayment?: boolean; monthlyAmount?: number | null },
+      monthsPaid: number,
+    ) => {
+      if (d.isMonthlyPayment && d.monthlyAmount != null) {
+        const remaining = Math.max(0, (d.amount || 0) - monthsPaid * d.monthlyAmount)
+        return Math.min(d.monthlyAmount, remaining)
+      }
+      return d.amount || 0
+    }
+
     const debts = debtsRes.docs as Array<{
       amount: number
+      who?: string
+      returnDate?: string | null
+      createdAt?: string
       isMonthlyPayment?: boolean
       monthlyAmount?: number | null
     }>
-    const totalDebt = debts.reduce((sum, d) => sum + (d.amount || 0), 0)
-    const monthlyDebt = debts.reduce((sum, d) => {
-      if (d.isMonthlyPayment && d.monthlyAmount != null) return sum + d.monthlyAmount
-      return sum
+    const filteredDebts = filterByMonth ? debts.filter(debtActiveInMonth) : debts
+    const totalDebt = filteredDebts.reduce((sum, d) => {
+      const monthsPaid = d.isMonthlyPayment ? getMonthsPaid(d.returnDate || d.createdAt) : 0
+      return sum + getDisplayAmount(d, monthsPaid)
     }, 0)
+    const monthlyDebtBreakdown = filteredDebts
+      .filter((d) => d.isMonthlyPayment && d.monthlyAmount != null)
+      .map((d) => {
+        const monthsPaid = getMonthsPaid(d.returnDate || d.createdAt)
+        const monthlyTotal = getMonthlyTotal(d, monthsPaid)
+        return { who: d.who || '—', monthlyAmount: monthlyTotal }
+      })
+    const monthlyDebt = monthlyDebtBreakdown.reduce((sum, d) => sum + d.monthlyAmount, 0)
 
     const potentialDebts = potentialDebtsRes.docs as Array<{
       amount: number
+      returnDate?: string | null
+      createdAt?: string
       isMonthlyPayment?: boolean
       monthlyAmount?: number | null
     }>
-    const potentialDebtTotal = potentialDebts.reduce((sum, d) => sum + (d.amount || 0), 0)
-    const potentialDebtMonthly = potentialDebts.reduce((sum, d) => {
-      if (d.isMonthlyPayment && d.monthlyAmount != null) return sum + d.monthlyAmount
-      return sum
+    const filteredPotentialDebts = filterByMonth
+      ? potentialDebts.filter(debtActiveInMonth)
+      : potentialDebts
+    const potentialDebtTotal = filteredPotentialDebts.reduce((sum, d) => {
+      const monthsPaid = d.isMonthlyPayment ? getMonthsPaid(d.returnDate || d.createdAt) : 0
+      return sum + getDisplayAmount(d, monthsPaid)
+    }, 0)
+    const potentialDebtMonthly = filteredPotentialDebts.reduce((sum, d) => {
+      const monthsPaid = d.isMonthlyPayment ? getMonthsPaid(d.returnDate || d.createdAt) : 0
+      return sum + getMonthlyTotal(d, monthsPaid)
     }, 0)
 
-    const plannedPayments = plannedPaymentsRes.docs as Array<{ amount: number }>
-    const plannedPaymentsNextMonth = plannedPayments.reduce(
-      (sum, p) => sum + (p.amount || 0),
+    const plannedPayments = plannedPaymentsRes.docs as Array<{ name?: string; amount: number }>
+    const plannedPaymentsBreakdown = plannedPayments.map((p) => ({
+      name: p.name || '—',
+      amount: p.amount || 0,
+    }))
+    const plannedPaymentsNextMonth = plannedPaymentsBreakdown.reduce(
+      (sum, p) => sum + p.amount,
       0,
     )
 
@@ -175,8 +259,15 @@ export async function GET() {
       0,
     )
 
-    const incomes = incomesRes.docs as Array<{ amount: number }>
-    const monthlyIncome = incomes.reduce((sum, i) => sum + (i.amount || 0), 0)
+    const incomes = incomesRes.docs as Array<{ amount: number; receiptDate?: string | null }>
+    const filteredIncomes = filterByMonth
+      ? incomes.filter((i) => {
+          if (i.receiptDate == null) return true
+          const d = new Date(i.receiptDate)
+          return d.getMonth() + 1 === filterMonth && d.getFullYear() === filterYear
+        })
+      : incomes
+    const monthlyIncome = filteredIncomes.reduce((sum, i) => sum + (i.amount || 0), 0)
 
     return NextResponse.json({
       exercisesCount: exercisesRes.totalDocs,
@@ -187,6 +278,14 @@ export async function GET() {
       currentWeight,
       currentBodyFat,
       monthlyDebt: Math.round(monthlyDebt * 100) / 100,
+      monthlyDebtBreakdown: monthlyDebtBreakdown.map((d) => ({
+        who: d.who,
+        monthlyAmount: Math.round(d.monthlyAmount * 100) / 100,
+      })),
+      plannedPaymentsBreakdown: plannedPaymentsBreakdown.map((p) => ({
+        name: p.name,
+        amount: Math.round(p.amount * 100) / 100,
+      })),
       totalDebt: Math.round(totalDebt * 100) / 100,
       potentialDebtTotal: Math.round(potentialDebtTotal * 100) / 100,
       potentialDebtMonthly: Math.round(potentialDebtMonthly * 100) / 100,

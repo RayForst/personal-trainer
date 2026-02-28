@@ -100,6 +100,7 @@ export async function GET(request: NextRequest) {
     const query: any = {
       collection: 'workouts',
       sort: '-date',
+      limit: date ? undefined : 1000,
     }
 
     if (date) {

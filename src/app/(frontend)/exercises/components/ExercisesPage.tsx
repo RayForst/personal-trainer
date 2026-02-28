@@ -51,7 +51,12 @@ const emptyForm = {
   notes: '',
 }
 
-export default function ExercisesPage() {
+interface ExercisesPageProps {
+  /** Встроенный режим — без внешней обёртки страницы (для вкладок) */
+  embedded?: boolean
+}
+
+export default function ExercisesPage({ embedded = false }: ExercisesPageProps = {}) {
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -166,9 +171,8 @@ export default function ExercisesPage() {
 
   const hasFilters = searchQuery || filterMuscleGroup || filterType
 
-  return (
-    <div className="triptych-container relative flex w-full h-[calc(100vh-var(--header-height))] mt-[var(--header-height)] overflow-hidden">
-      <main className="center-content flex-1 flex flex-col gap-6 p-6 overflow-y-auto min-w-0 w-full transition-[margin] duration-300 ease-in-out">
+  const content = (
+    <main className="center-content flex-1 flex flex-col gap-6 p-6 overflow-y-auto min-w-0 w-full transition-[margin] duration-300 ease-in-out">
         <div className="w-full max-w-[900px] mx-auto">
           {/* Заголовок */}
           <div className="flex justify-between items-center gap-4 flex-wrap mb-6">
@@ -407,7 +411,16 @@ export default function ExercisesPage() {
             </div>
           </div>
         )}
-      </main>
+    </main>
+  )
+
+  if (embedded) {
+    return <div className="flex-1 flex flex-col min-h-0 overflow-auto">{content}</div>
+  }
+
+  return (
+    <div className="triptych-container relative flex w-full h-[calc(100vh-var(--header-height))] mt-[var(--header-height)] overflow-hidden">
+      {content}
     </div>
   )
 }

@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { X, Pencil } from 'lucide-react'
 import { showToast } from '@/lib/toast'
 import { confirmAction } from '@/app/(frontend)/components/ConfirmDialog'
@@ -55,6 +56,8 @@ const PRIORITY_COLORS: Record<PaymentPriority, string> = {
   low: 'bg-gray-400',
 }
 
+const MONTH_NAMES = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
+
 export interface DesiredExpenseRecord {
   id: string
   name: string
@@ -101,6 +104,14 @@ function formatAmount(n: number): string {
 }
 
 export default function DebtsPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const monthParam = searchParams.get('month')
+  const yearParam = searchParams.get('year')
+  const now = new Date()
+  const month = monthParam != null ? parseInt(monthParam, 10) : now.getMonth() + 1
+  const year = yearParam != null ? parseInt(yearParam, 10) : now.getFullYear()
+
   const [records, setRecords] = useState<DebtRecord[]>([])
   const [plannedPayments, setPlannedPayments] = useState<PlannedPaymentRecord[]>([])
   const [loading, setLoading] = useState(true)
@@ -142,7 +153,7 @@ export default function DebtsPage() {
   const [deSubmitting, setDeSubmitting] = useState(false)
   const [editingDesiredExpenseId, setEditingDesiredExpenseId] = useState<string | null>(null)
 
-  const fetchRecords = async () => {
+  const fetchRecords = useCallback(async () => {
     try {
       setLoading(true)
       const [debtsRes, ppRes, pdRes, deRes, incomesRes] = await Promise.all([
@@ -150,7 +161,7 @@ export default function DebtsPage() {
         fetch('/api/planned-payments'),
         fetch('/api/potential-debts'),
         fetch('/api/desired-expenses'),
-        fetch('/api/incomes'),
+        fetch(`/api/incomes?month=${month}&year=${year}`),
       ])
       if (debtsRes.ok) {
         const data = await debtsRes.json()
@@ -188,11 +199,15 @@ export default function DebtsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [month, year])
 
   useEffect(() => {
+    if (!monthParam || !yearParam) {
+      router.replace(`/debts?month=${month}&year=${year}`)
+      return
+    }
     fetchRecords()
-  }, [])
+  }, [month, year, monthParam, yearParam, fetchRecords, router])
 
   const handleEdit = (r: DebtRecord) => {
     setEditingDebtId(r.id)
@@ -289,16 +304,111 @@ export default function DebtsPage() {
     }
   }
 
-  const totalDebt = records.reduce((sum, r) => sum + (r.amount || 0), 0)
-  const monthlyDebt = records.reduce((sum, r) => {
-    if (r.isMonthlyPayment && r.monthlyAmount != null) return sum + r.monthlyAmount
-    return sum
+  const getMonthsPaid = (startDate: string | null | undefined) => {
+    if (!startDate) return 0
+    const d = new Date(startDate)
+    return Math.max(0, (year - d.getFullYear()) * 12 + (month - (d.getMonth() + 1)))
+  }
+
+  const getDebtDisplayAmount = (
+    r: DebtRecord,
+    monthsPaid: number,
+  ): { displayAmount: number; monthlyTotal: number } => {
+    if (r.isMonthlyPayment && r.monthlyAmount != null) {
+      const remaining = Math.max(0, (r.amount || 0) - monthsPaid * r.monthlyAmount)
+      return {
+        displayAmount: remaining,
+        monthlyTotal: Math.min(r.monthlyAmount, remaining),
+      }
+    }
+    return { displayAmount: r.amount || 0, monthlyTotal: r.amount || 0 }
+  }
+
+  const getPotentialDebtDisplayAmount = (
+    r: PotentialDebtRecord,
+    monthsPaid: number,
+  ): { displayAmount: number; monthlyTotal: number } => {
+    if (r.isMonthlyPayment && r.monthlyAmount != null) {
+      const remaining = Math.max(0, (r.amount || 0) - monthsPaid * r.monthlyAmount)
+      return {
+        displayAmount: remaining,
+        monthlyTotal: Math.min(r.monthlyAmount, remaining),
+      }
+    }
+    return { displayAmount: r.amount || 0, monthlyTotal: r.amount || 0 }
+  }
+
+  const debtActiveInMonth = (r: DebtRecord): boolean => {
+    if (r.isMonthlyPayment && r.monthlyAmount != null) {
+      const startDate = r.returnDate || r.createdAt
+      if (!startDate) return true
+      const d = new Date(startDate)
+      const startYear = d.getFullYear()
+      const startMonth = d.getMonth() + 1
+      if (year < startYear || (year === startYear && month < startMonth)) return false
+      const monthsPaid = getMonthsPaid(startDate)
+      const remaining = Math.max(0, (r.amount || 0) - monthsPaid * r.monthlyAmount)
+      return remaining > 0
+    }
+    if (r.returnDate == null) return true
+    const d = new Date(r.returnDate)
+    const monthStart = new Date(year, month - 1, 1)
+    const monthEnd = new Date(year, month, 1)
+    return d >= monthStart && d < monthEnd
+  }
+
+  const potentialDebtActiveInMonth = (r: PotentialDebtRecord): boolean => {
+    if (r.isMonthlyPayment && r.monthlyAmount != null) {
+      const startDate = r.returnDate || r.createdAt
+      if (!startDate) return true
+      const d = new Date(startDate)
+      const startYear = d.getFullYear()
+      const startMonth = d.getMonth() + 1
+      if (year < startYear || (year === startYear && month < startMonth)) return false
+      const monthsPaid = getMonthsPaid(startDate)
+      const remaining = Math.max(0, (r.amount || 0) - monthsPaid * r.monthlyAmount)
+      return remaining > 0
+    }
+    if (r.returnDate == null) return true
+    const d = new Date(r.returnDate)
+    const monthStart = new Date(year, month - 1, 1)
+    const monthEnd = new Date(year, month, 1)
+    return d >= monthStart && d < monthEnd
+  }
+
+  const filteredRecords = records.filter(debtActiveInMonth)
+  const filteredPotentialDebts = potentialDebts.filter(potentialDebtActiveInMonth)
+
+  const totalDebt = filteredRecords.reduce((sum, r) => {
+    const monthsPaid = r.isMonthlyPayment ? getMonthsPaid(r.returnDate || r.createdAt) : 0
+    const { displayAmount } = getDebtDisplayAmount(r, monthsPaid)
+    return sum + displayAmount
+  }, 0)
+  const monthlyDebt = filteredRecords.reduce((sum, r) => {
+    const monthsPaid = r.isMonthlyPayment ? getMonthsPaid(r.returnDate || r.createdAt) : 0
+    const { monthlyTotal } = getDebtDisplayAmount(r, monthsPaid)
+    return sum + (r.isMonthlyPayment && r.monthlyAmount != null ? monthlyTotal : 0)
+  }, 0)
+  const debtMonthlyTotalSum = filteredRecords.reduce((sum, r) => {
+    const monthsPaid = r.isMonthlyPayment ? getMonthsPaid(r.returnDate || r.createdAt) : 0
+    const { monthlyTotal } = getDebtDisplayAmount(r, monthsPaid)
+    return sum + monthlyTotal
   }, 0)
   const plannedPaymentsTotal = plannedPayments.reduce((sum, p) => sum + (p.amount || 0), 0)
-  const potentialDebtTotal = potentialDebts.reduce((sum, r) => sum + (r.amount || 0), 0)
-  const potentialDebtMonthly = potentialDebts.reduce((sum, r) => {
-    if (r.isMonthlyPayment && r.monthlyAmount != null) return sum + r.monthlyAmount
-    return sum
+  const potentialDebtTotal = filteredPotentialDebts.reduce((sum, r) => {
+    const monthsPaid = r.isMonthlyPayment ? getMonthsPaid(r.returnDate || r.createdAt) : 0
+    const { displayAmount } = getPotentialDebtDisplayAmount(r, monthsPaid)
+    return sum + displayAmount
+  }, 0)
+  const potentialDebtMonthly = filteredPotentialDebts.reduce((sum, r) => {
+    const monthsPaid = r.isMonthlyPayment ? getMonthsPaid(r.returnDate || r.createdAt) : 0
+    const { monthlyTotal } = getPotentialDebtDisplayAmount(r, monthsPaid)
+    return sum + (r.isMonthlyPayment && r.monthlyAmount != null ? monthlyTotal : 0)
+  }, 0)
+  const potentialDebtMonthlyTotalSum = filteredPotentialDebts.reduce((sum, r) => {
+    const monthsPaid = r.isMonthlyPayment ? getMonthsPaid(r.returnDate || r.createdAt) : 0
+    const { monthlyTotal } = getPotentialDebtDisplayAmount(r, monthsPaid)
+    return sum + monthlyTotal
   }, 0)
   const desiredExpensesTotal = desiredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0)
   const monthlyIncomeTotal = incomes.reduce((sum, i) => sum + (i.amount || 0), 0)
@@ -630,7 +740,9 @@ export default function DebtsPage() {
       <main className="center-content flex-1 flex flex-row items-start overflow-y-auto min-w-0 w-full transition-[margin] duration-300 ease-in-out p-6 gap-6">
         {/* Форма — слева, 50% ширины */}
         <section className="w-1/2 min-w-0 shrink-0 bg-white rounded-xl p-6 shadow-sm overflow-y-auto">
-          <h1 className="m-0 mb-2 text-2xl text-gray-800">Долги и платежи</h1>
+          <h1 className="m-0 mb-2 text-2xl text-gray-800">
+            Долги и платежи — Обзор за {MONTH_NAMES[month - 1]} {year}
+          </h1>
           <p className="m-0 mb-6 text-gray-500 text-[0.95rem]">
             Долги: сумма, кто кому должен, дата отдачи. Платежи: подписки и сервисы (не долг, можно отменить).
           </p>
@@ -846,7 +958,7 @@ export default function DebtsPage() {
             <h3 className="m-0 mb-4 text-base font-semibold text-gray-600">Таблица долгов</h3>
             {loading ? (
               <p className="m-0 text-gray-500">Загрузка…</p>
-            ) : records.length === 0 ? (
+            ) : filteredRecords.length === 0 ? (
               <p className="m-0 text-gray-500">Пока нет записей. Добавьте первый долг.</p>
             ) : (
               <div className="overflow-x-auto">
@@ -858,11 +970,12 @@ export default function DebtsPage() {
                       <th>Приоритет</th>
                       <th>Дата отдачи</th>
                       <th>Ежемес. платёж</th>
+                      <th>Итоговая сумма</th>
                       <th></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {[...records]
+                    {[...filteredRecords]
                       .sort(
                         (a, b) =>
                           DEBT_PRIORITY_ORDER[(a.priority || 'normal') as DebtPriority] -
@@ -870,9 +983,11 @@ export default function DebtsPage() {
                       )
                       .map((r) => {
                         const p = (r.priority || 'normal') as DebtPriority
+                        const monthsPaid = r.isMonthlyPayment ? getMonthsPaid(r.returnDate || r.createdAt) : 0
+                        const { displayAmount, monthlyTotal } = getDebtDisplayAmount(r, monthsPaid)
                         return (
                       <tr key={r.id}>
-                        <td className="font-medium text-red-600">−{formatAmount(r.amount)} €</td>
+                        <td className="font-medium text-red-600">−{formatAmount(displayAmount)} €</td>
                         <td>{r.who}</td>
                         <td>
                           <span className="inline-flex items-center gap-1.5">
@@ -890,6 +1005,9 @@ export default function DebtsPage() {
                           ) : (
                             '—'
                           )}
+                        </td>
+                        <td className="font-semibold text-red-600">
+                          −{formatAmount(monthlyTotal)} €
                         </td>
                         <td>
                           <div className="flex gap-0.5 justify-end items-center">
@@ -914,6 +1032,21 @@ export default function DebtsPage() {
                       </tr>
                       )})}
                   </tbody>
+                  <tfoot>
+                    <tr className="bg-gray-50 font-semibold [&_td]:border-t-2 [&_td]:border-gray-300">
+                      <td className="py-2.5 px-3 text-red-600">−{formatAmount(totalDebt)} €</td>
+                      <td colSpan={3} className="py-2.5 px-3 text-gray-700">Итого</td>
+                      <td className="py-2.5 px-3">
+                        {monthlyDebt > 0 ? (
+                          <span className="text-orange-600">−{formatAmount(monthlyDebt)} €</span>
+                        ) : (
+                          '—'
+                        )}
+                      </td>
+                      <td className="py-2.5 px-3 text-red-600">−{formatAmount(debtMonthlyTotalSum)} €</td>
+                      <td />
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
             )}
@@ -1276,7 +1409,7 @@ export default function DebtsPage() {
             <h3 className="m-0 mb-4 text-base font-semibold text-gray-600">Таблица потенциальных долгов</h3>
             {loading ? (
               <p className="m-0 text-gray-500">Загрузка…</p>
-            ) : potentialDebts.length === 0 ? (
+            ) : filteredPotentialDebts.length === 0 ? (
               <p className="m-0 text-gray-500">Пока нет записей. Добавьте первый потенциальный долг.</p>
             ) : (
               <div className="overflow-x-auto">
@@ -1288,11 +1421,12 @@ export default function DebtsPage() {
                       <th>Приоритет</th>
                       <th>Дата отдачи</th>
                       <th>Ежемес. платёж</th>
+                      <th>Итоговая сумма</th>
                       <th></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {[...potentialDebts]
+                    {[...filteredPotentialDebts]
                       .sort(
                         (a, b) =>
                           DEBT_PRIORITY_ORDER[(a.priority || 'normal') as DebtPriority] -
@@ -1300,9 +1434,11 @@ export default function DebtsPage() {
                       )
                       .map((r) => {
                         const p = (r.priority || 'normal') as DebtPriority
+                        const monthsPaid = r.isMonthlyPayment ? getMonthsPaid(r.returnDate || r.createdAt) : 0
+                        const { displayAmount, monthlyTotal } = getPotentialDebtDisplayAmount(r, monthsPaid)
                         return (
                       <tr key={r.id}>
-                        <td className="font-medium text-red-600">−{formatAmount(r.amount)} €</td>
+                        <td className="font-medium text-red-600">−{formatAmount(displayAmount)} €</td>
                         <td>{r.who}</td>
                         <td>
                           <span className="inline-flex items-center gap-1.5">
@@ -1320,6 +1456,9 @@ export default function DebtsPage() {
                           ) : (
                             '—'
                           )}
+                        </td>
+                        <td className="font-semibold text-red-600">
+                          −{formatAmount(monthlyTotal)} €
                         </td>
                         <td>
                           <div className="flex gap-0.5 justify-end items-center">
@@ -1344,6 +1483,21 @@ export default function DebtsPage() {
                       </tr>
                       )})}
                   </tbody>
+                  <tfoot>
+                    <tr className="bg-gray-50 font-semibold [&_td]:border-t-2 [&_td]:border-gray-300">
+                      <td className="py-2.5 px-3 text-red-600">−{formatAmount(potentialDebtTotal)} €</td>
+                      <td colSpan={3} className="py-2.5 px-3 text-gray-700">Итого</td>
+                      <td className="py-2.5 px-3">
+                        {potentialDebtMonthly > 0 ? (
+                          <span className="text-orange-600">−{formatAmount(potentialDebtMonthly)} €</span>
+                        ) : (
+                          '—'
+                        )}
+                      </td>
+                      <td className="py-2.5 px-3 text-red-600">−{formatAmount(potentialDebtMonthlyTotalSum)} €</td>
+                      <td />
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
             )}
